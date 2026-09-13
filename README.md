@@ -1,143 +1,222 @@
-# A clean Arch + Hyprland setup for a 2018 Mac mini
+# Clean Arch Linux + Hyprland on 2018 Mac mini
 
-This guide describes a small, independently configured desktop inspired by the useful parts of Omarchy:
+A lightweight, transparent, and independently configured Arch Linux + Hyprland desktop designed for the **2018 Intel Mac mini (T2 / Intel UHD 630)**.
 
-- fast keyboard-driven window management;
-- normal mouse use, including moving and resizing windows;
-- a simple launcher, status bar, terminal, notifications, and graphical file manager;
-- no Omarchy shell, themes, update layer, or bundled configuration.
+This repository provides both a complete guide and pre-configured dotfiles tailored for a **hybrid mouse + keyboard workflow**:
+- **Natural mouse interaction**: Resize windows simply by dragging their borders (no modifier keys required), drag and position windows with `Super + Left Click`, and toggle floating with `Super + Middle Click`.
+- **Fast keyboard control**: Launch apps, switch workspaces, and manage windows with clean, intuitive shortcuts.
+- **Lightweight & modular**: Fast Wayland components (`hyprland`, `waybar`, `rofi-wayland`, `foot`, `thunar`, `mako`) with zero bloated layers or unwanted third-party dependencies.
+- **Automated setup**: A single, clean `install.sh` script to install packages, configure services, and deploy dotfiles.
 
-The examples assume a 2018 Intel Mac mini. That model has Apple's T2 chip, so read the T2 Linux installation instructions before starting.
+---
 
-## Before you install
+## 1. Pre-Installation: 2018 Mac mini (T2 Chip) Checklist
 
-Back up anything important. Decide whether you are replacing macOS or dual-booting, and make sure you have a second computer or phone available if you need to troubleshoot.
+The 2018 Mac mini contains Apple's **T2 Security Chip**, which secures the internal NVMe drive, Wi-Fi (Broadcom BCM4364), Bluetooth, and audio. Before installing Linux, you must perform these steps in macOS:
 
-The 2018 Mac mini is a T2 Mac. Use the [T2 Linux Arch installation guide](https://wiki.t2linux.org/distributions/arch/installation/) and its recommended T2-aware installation media/kernel. The regular Arch installer may boot while leaving Wi-Fi, Bluetooth, audio, or other hardware incomplete.
+### Step 1: Disable Apple Secure Boot
+1. Shut down the Mac mini.
+2. Hold down **`Command (⌘) + R`** immediately after pressing the power button until you see the Apple logo.
+3. In macOS Recovery, navigate to the top menu bar: **Utilities > Startup Security Utility**.
+4. Authenticate as an administrator.
+5. Set **Secure Boot** to **"No Security"**.
+6. Set **Allowed Boot Media** to **"Allow booting from external media"**.
+7. Restart the Mac.
 
-For a guided installation, see [Archinstall](https://wiki.archlinux.org/title/Archinstall). Install a UEFI system with:
+### Step 2: Prepare T2-Aware Arch Installation Media
+Standard vanilla Arch ISOs lack drivers for Apple T2 NVMe controllers, internal audio, and Wi-Fi.
+1. Download the pre-patched **T2 Arch Linux ISO** from the [T2 Linux Arch Guide](https://wiki.t2linux.org/distributions/arch/installation/).
+2. Flash the ISO to a USB flash drive using BalenaEtcher, Raspberry Pi Imager, or `dd`:
+   ```bash
+   sudo dd if=archlinux-t2-*.iso of=/dev/sdX bs=4M status=progress oflag=sync
+   ```
+3. Insert the USB drive into the Mac mini, power on, and hold the **`Option (⌥)`** key to select the EFI boot drive.
 
-- NetworkManager;
-- a normal user with `sudo` access;
-- the T2 Linux kernel and support packages recommended by T2 Linux;
-- no desktop environment initially.
+---
 
-Do not run a large third-party desktop bootstrap script unless you have read it and are comfortable maintaining everything it changes.
+## 2. Base Arch Installation
 
-## Install the desktop pieces
+Once booted into the live environment:
 
-After booting into the new system:
+1. Connect to Wi-Fi if not using Ethernet:
+   ```bash
+   iwctl
+   # station wlan0 scan
+   # station wlan0 get-networks
+   # station wlan0 connect <Your-SSID>
+   ```
+2. Launch the guided installer:
+   ```bash
+   archinstall
+   ```
+3. In `archinstall`, select:
+   - **Audio:** PipeWire
+   - **Network:** NetworkManager
+   - **Kernel:** `linux-t2` (if prompted or on T2 ISO) or `linux` (add `t2linux` repository post-install)
+   - **Profile:** Minimal / No desktop environment initially (we install Hyprland in the next step)
+   - **User:** Create a standard user with `sudo` / `wheel` privileges
+
+Reboot into your new Arch Linux system.
+
+---
+
+## 3. Quick Setup (Automated)
+
+Once logged into your new Arch Linux terminal as your regular user:
 
 ```bash
-sudo pacman -Syu
+# 1. Clone this repository
+git clone https://github.com/funstuie-bit/arch-hyprland-guide.git
+cd arch-hyprland-guide
 
-sudo pacman -S \
-  hyprland waybar wofi foot \
-  thunar file-roller \
-  mako \
-  pipewire pipewire-audio pipewire-pulse pipewire-alsa wireplumber \
-  network-manager-applet \
-  pavucontrol \
-  bluez bluez-utils \
-  xdg-desktop-portal-hyprland xdg-desktop-portal-gtk \
-  hyprlock hypridle \
-  grim slurp wl-clipboard \
-  brightnessctl playerctl \
-  polkit-gnome \
-  git
+# 2. Run the bootstrap installer
+./install.sh
 ```
 
-Enable networking and Bluetooth if needed:
+The script will:
+1. Install all necessary graphics drivers (`mesa`, `vulkan-intel`, `intel-media-driver`), Hyprland desktop packages, audio, fonts, and utilities.
+2. Enable `NetworkManager` and `bluetooth` system services.
+3. Back up any existing config and link the pre-configured dotfiles into `~/.config/`.
 
+To start your graphical desktop, run:
+```bash
+Hyprland
+```
+
+---
+
+## 4. Mouse-Friendly Hyprland Workflow
+
+Unlike strict keyboard-only configurations, this setup is tuned for comfortable mouse usage:
+
+### Natural Border Resizing
+You do not need to press keyboard shortcuts to resize windows. Hover your mouse over any window border or corner and click-drag to resize, exactly like macOS and Windows:
+```ini
+general {
+    resize_on_border = true
+    extend_border_grab_area = 15
+    hover_icon_on_border = true
+}
+```
+
+### No Cursor Warping
+Tiling compositors often jerk your mouse pointer across screens whenever a window changes focus. This configuration sets:
+```ini
+cursor {
+    no_warps = true
+}
+```
+Your cursor stays wherever you placed it.
+
+### Mouse Window Controls
+| Action | Binding |
+| :--- | :--- |
+| **Move window** | Hold `Super` + Left-Click Drag |
+| **Resize window** | Hold `Super` + Right-Click Drag |
+| **Toggle Floating** | Hold `Super` + Middle-Click (or `Super + V`) |
+| **Switch Workspaces** | Hold `Super` + Mouse Scroll Wheel |
+
+### Interactive Status Bar (Waybar)
+- **Workspaces:** Click any workspace number to jump to it.
+- **Audio:** Scroll to increase/decrease volume. Left-click to mute. Right-click to open `pavucontrol` mixer.
+- **Network:** Click to open network connection manager (`nm-connection-editor`).
+- **Clock:** Displays formatted date/time with a calendar tooltip.
+- **Power:** Click power icon to lock screen or display power options.
+
+---
+
+## 5. Keyboard Shortcuts Cheatsheet
+
+| Shortcut | Action | Description |
+| :--- | :--- | :--- |
+| `Super + Space` | **App Launcher** | Opens Rofi application search (mouse clickable) |
+| `Super + Enter` | **Terminal** | Opens Foot terminal emulator |
+| `Super + E` | **File Manager** | Opens Thunar graphical file manager |
+| `Super + Q` | **Close Window** | Closes the focused window |
+| `Super + V` | **Toggle Floating** | Detaches window from tiling grid |
+| `Super + F` | **Fullscreen** | Toggles fullscreen for active window |
+| `Super + L` | **Lock Screen** | Locks session via `hyprlock` |
+| `Super + Shift + S` | **Screenshot Area** | Select rectangular area with mouse and copy to clipboard |
+| `PrintScreen` | **Full Screenshot** | Saves screenshot to `~/Pictures/Screenshots/` |
+| `Super + 1 .. 9, 0` | **Workspaces** | Switch to workspaces 1 through 10 |
+| `Super + Shift + 1 .. 0` | **Move to Workspace**| Move active window to chosen workspace |
+| `Super + Arrow Keys` | **Focus Window** | Move focus to left, right, up, or down window |
+
+---
+
+## 6. Repository Dotfiles Structure
+
+```text
+arch-hyprland-guide/
+├── install.sh                  # Automated bootstrap script
+├── README.md                   # Installation guide & documentation
+└── dotfiles/
+    ├── hypr/
+    │   ├── hyprland.conf       # Hyprland config (mouse borders, keybinds, rules)
+    │   └── hyprpaper.conf      # Wallpaper daemon config
+    ├── waybar/
+    │   ├── config.jsonc        # Clickable status bar modules
+    │   └── style.css           # Modern translucent pill theme
+    ├── rofi/
+    │   └── config.rasi         # Application launcher with mouse support
+    ├── foot/
+    │   └── foot.ini            # Lightweight Wayland terminal
+    └── mako/
+        └── config              # Desktop notification styling
+```
+
+---
+
+## 7. Manual Installation & Packages Breakdown
+
+If you prefer installing packages manually without the `install.sh` script:
+
+```bash
+sudo pacman -Syu --needed \
+  mesa vulkan-intel intel-media-driver \
+  hyprland xdg-desktop-portal-hyprland xdg-desktop-portal-gtk \
+  hyprpolkitagent hyprpaper hyprlock hypridle \
+  waybar rofi-wayland mako libnotify \
+  foot thunar thunar-volman gvfs tumbler file-roller \
+  pipewire pipewire-audio pipewire-pulse pipewire-alsa wireplumber pavucontrol \
+  networkmanager network-manager-applet bluez bluez-utils blueman \
+  grim slurp wl-clipboard brightnessctl playerctl papirus-icon-theme \
+  ttf-jetbrains-mono-nerd noto-fonts noto-fonts-emoji
+```
+
+Enable system services:
 ```bash
 sudo systemctl enable --now NetworkManager
 sudo systemctl enable --now bluetooth
 ```
 
-Hyprland needs a Polkit authentication agent or `seatd`. Start `polkit-gnome` from your session if you use it. Audio is normally provided by PipeWire and WirePlumber; the ArchWiki has further [PipeWire details](https://wiki.archlinux.org/title/PipeWire).
-
-## Start Hyprland
-
-You can select Hyprland from a display manager, or start it from a TTY with:
-
+Copy dotfiles into place:
 ```bash
-start-hyprland
+cp -r dotfiles/* ~/.config/
 ```
 
-On current Hyprland releases, configuration is Lua-based. Start with the generated example at `~/.config/hypr/hyprland.lua`, then split your own configuration into small files as it grows. Use the [current Hyprland documentation](https://wiki.hypr.land/) for the syntax installed on your machine; older examples using `bind = ...` may not apply to newer releases.
+---
 
-## Mouse behavior
+## 8. 2018 Mac mini Hardware Troubleshooting
 
-Hyprland supports normal mouse use. A useful convention is:
+### Apple T2 Kernel & Audio
+If audio devices or Wi-Fi are not visible after rebooting into the installed system, follow the [T2 Linux Arch Wiki](https://wiki.t2linux.org/distributions/arch/installation/) to add the precompiled T2 repository to `/etc/pacman.conf`:
+```ini
+[t2linux]
+Server = https://github.com/t2linux/arch-wiki-docs/releases/download/packages
+```
+Then install `linux-t2`, `linux-t2-headers`, and `apple-t2-audio-config`.
 
-- `Alt` + left-drag: move the active window;
-- `Alt` + right-drag: resize the active window;
-- optionally, `Alt` + left-click: toggle floating.
-
-For current Lua configuration, the mouse bindings are:
-
-```lua
-hl.bind("ALT + mouse:272", hl.dsp.window.drag(), {
-    mouse = true
-})
-
-hl.bind("ALT + mouse:273", hl.dsp.window.resize(), {
-    mouse = true
-})
+### High-DPI / 4K Displays
+If you are using a 4K display and the text/icons appear too small, open `~/.config/hypr/hyprland.conf` and adjust the monitor scaling line:
+```ini
+# Change scale factor (e.g. 1.5 or 2)
+monitor = , preferred, auto, 1.5
 ```
 
-Left mouse is `mouse:272`; right mouse is `mouse:273`. See the [Hyprland mouse-bind documentation](https://wiki.hypr.land/configuring/core/binds/devices/mouse/).
-
-If you prefer a more traditional desktop, configure most windows as floating or use KDE Plasma instead of Hyprland. Hyprland does not require you to use strict tiling all the time.
-
-## A small keyboard layout
-
-Keep the initial keymap deliberately small:
-
-| Shortcut | Action |
-| --- | --- |
-| `Super + Enter` | Open terminal |
-| `Super + Space` | Open application launcher |
-| `Super + Q` | Close active window |
-| `Super + F` | Toggle fullscreen |
-| `Super + 1..9` | Switch workspace |
-| `Super + Shift + 1..9` | Move window to workspace |
-| `Super + E` | Open file manager |
-| `Super + B` | Open browser |
-
-Use `waybar` for the bar, `wofi` for the launcher, `foot` for the terminal, `mako` for notifications, and `thunar` for graphical file management. Each is a separate package and can be replaced without replacing the desktop.
-
-## Sensible next additions
-
-Add these only when you need them:
-
-- a browser such as Firefox or Chromium;
-- `polkit-gnome` startup if graphical authentication prompts do not appear;
-- `hyprlock` and `hypridle` startup for locking and idle handling;
-- `grim` and `slurp` bindings for screenshots;
-- `pavucontrol` for detailed audio control;
-- `blueman` if you prefer a graphical Bluetooth manager;
-- a display manager such as `greetd` only after the TTY setup works.
-
-Keep configuration in `~/.config/`. Avoid editing package-owned files under `/usr/share`, and keep a copy of your configuration in this repository so the system remains reproducible.
-
-## Troubleshooting principles
-
-1. Check the T2 Linux documentation first for Mac-specific hardware problems.
-2. Check the ArchWiki and the current upstream Hyprland documentation for package or syntax changes.
-3. Test one component at a time: compositor, network, audio, portals, then applications.
-4. Prefer official Arch packages; use the AUR only when a needed package is unavailable in the official repositories.
-5. After changing Hyprland configuration, reload and inspect errors:
-
-   ```bash
-   hyprctl reload
-   hyprctl configerrors
-   ```
-
-## Alternatives
-
-- **KDE Plasma on Wayland:** best if mouse-first interaction and familiar desktop controls matter more than tiling.
-- **Sway + Waybar:** a simpler, more conservative keyboard-driven Wayland desktop.
-- **Hyprland:** the closest fit to the Omarchy experience, while remaining independently configurable.
-
-For the preferences described here, start with Hyprland and a short configuration. Add polish only after the basic mouse, keyboard, networking, audio, and suspend behavior are reliable.
+### Reloading Hyprland
+Whenever you edit `~/.config/hypr/hyprland.conf`, Hyprland reloads automatically. If needed, force a reload and check for syntax errors:
+```bash
+hyprctl reload
+hyprctl configerrors
+```
