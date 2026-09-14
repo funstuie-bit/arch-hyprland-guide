@@ -29,7 +29,8 @@ configuration {
 window {
     width:                      550px;
     border-radius:              12px;
-    border:                     2px solid @accent;
+    border:                     2px;
+    border-color:               @accent;
     background-color:           @bg;
     padding:                    20px;
 }
