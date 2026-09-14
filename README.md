@@ -292,13 +292,18 @@ arch-hyprland-guide/
 
 ## 8. 2018 Mac mini Hardware Troubleshooting
 
-### Apple T2 Kernel & Audio
-If audio devices or Wi-Fi are not visible after rebooting into the installed system, follow the [T2 Linux Arch Wiki](https://wiki.t2linux.org/distributions/arch/installation/) to add the precompiled T2 repository to `/etc/pacman.conf`:
+### Apple T2 Kernel, Wi-Fi & Audio
+The installer automatically detects Apple T2 hardware and configures the official `[arch-mact2]` repository and packages. If configuring manually, add the repository to `/etc/pacman.conf`:
 ```ini
-[t2linux]
-Server = https://github.com/t2linux/arch-wiki-docs/releases/download/packages
+[arch-mact2]
+Server = https://mirror.funami.tech/arch-mact2/os/x86_64
+SigLevel = Never
 ```
-Then install `linux-t2`, `linux-t2-headers`, and `apple-t2-audio-config`.
+Then install `linux-t2`, `linux-t2-headers`, `apple-t2-audio-config`, `apple-bcm-firmware`, and `t2fand`:
+```bash
+sudo pacman -Sy --needed linux-t2 linux-t2-headers apple-t2-audio-config apple-bcm-firmware t2fand
+sudo systemctl enable --now t2fand
+```
 
 ### High-DPI / 4K Displays
 If you are using a 4K display and the text/icons appear too small, open `~/.config/hypr/hyprland.conf` and adjust the monitor scaling line:

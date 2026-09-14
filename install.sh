@@ -81,10 +81,19 @@ echo " 6. Development & AI tools (Neovim, GitHub CLI, Ollama, Llama.cpp, LM Stud
 echo " 7. Mouse-friendly dotfiles, Super+K cheatsheet, and crash diagnosis"
 echo ""
 
-read -rp "Proceed with installation? [y/N]: " confirm
-if [[ ! "${confirm}" =~ ^[Yy]$ ]]; then
-    echo "Installation aborted."
-    exit 0
+AUTO_YES=false
+for arg in "$@"; do
+    case "$arg" in
+        -y|--yes) AUTO_YES=true ;;
+    esac
+done
+
+if [[ "${AUTO_YES}" != true ]]; then
+    read -rp "Proceed with installation? [y/N]: " confirm
+    if [[ ! "${confirm}" =~ ^[Yy]$ ]]; then
+        echo "Installation aborted."
+        exit 0
+    fi
 fi
 
 # -----------------------------------------------------------------------------
@@ -165,13 +174,14 @@ APP_PACKAGES=(
     obs-studio
     kdenlive
     neovim
-    gh
+    github-cli
+    mise
     firefox
     chromium
     telegram-desktop
     discord
     ollama
-    llama.cpp
+    llama-cpp
 )
 
 log "Updating pacman databases and installing core desktop packages..."
@@ -237,10 +247,8 @@ fi
 
 if command -v yay >/dev/null 2>&1; then
     AUR_PACKAGES=(
-        rofi-wayland
         zen-browser-bin
         localsend-bin
-        mise-bin
         lm-studio-bin
     )
     log "Installing AUR packages..."
@@ -355,17 +363,63 @@ if command -v tldr >/dev/null 2>&1; then
 fi
 
 # -----------------------------------------------------------------------------
-# 7. T2 LINUX HARDWARE CHECK
+# 7. T2 LINUX HARDWARE CONFIGURATION
 # -----------------------------------------------------------------------------
-header "7. Hardware Check (Apple T2 Mac mini)"
+header "7. Hardware Setup (Apple T2 Mac mini)"
 
-if uname -r | grep -iq "t2"; then
-    log "Apple T2-patched Linux kernel detected! (${BOLD}$(uname -r)${RESET})"
+if lspci | grep -iq "Apple Inc. T2" || uname -r | grep -iq "t2"; then
+    log "Apple T2 hardware detected!"
+
+    # 1. Add [arch-mact2] repository if not already in pacman.conf
+    if ! grep -q "\[arch-mact2\]" /etc/pacman.conf 2>/dev/null; then
+        log "Adding [arch-mact2] repository to /etc/pacman.conf..."
+        sudo tee -a /etc/pacman.conf << 'EOF'
+
+[arch-mact2]
+Server = https://mirror.funami.tech/arch-mact2/os/x86_64
+SigLevel = Never
+EOF
+        sudo pacman -Sy
+    fi
+
+    # 2. Install T2 kernel and drivers
+    log "Installing linux-t2 kernel, audio config, Broadcom Wi-Fi firmware, and fan daemon..."
+    sudo pacman -S --needed --noconfirm linux-t2 linux-t2-headers apple-t2-audio-config apple-bcm-firmware t2fanrd || warn "Could not install some T2 packages."
+
+    # 3. Enable fan daemon
+    log "Enabling t2fanrd service..."
+    sudo systemctl enable --now t2fanrd 2>/dev/null || true
+
+    # 4. Configure systemd-boot loader entry if systemd-boot is present
+    if [[ -d /boot/loader/entries ]]; then
+        EXISTING_ENTRY="$(find /boot/loader/entries -maxdepth 1 -name '*.conf' ! -name 'linux-t2.conf' 2>/dev/null | head -n 1)"
+        if [[ -n "$EXISTING_ENTRY" && -f "$EXISTING_ENTRY" ]]; then
+            OPTIONS_LINE="$(grep -E '^options[[:space:]]' "$EXISTING_ENTRY" | head -n 1)"
+            log "Creating systemd-boot entry /boot/loader/entries/linux-t2.conf..."
+            sudo tee /boot/loader/entries/linux-t2.conf >/dev/null << EOF
+title   Arch Linux (linux-t2)
+linux   /vmlinuz-linux-t2
+initrd  /intel-ucode.img
+initrd  /initramfs-linux-t2.img
+${OPTIONS_LINE}
+EOF
+            if [[ -f /boot/loader/loader.conf ]]; then
+                if ! grep -q "default[[:space:]]" /boot/loader/loader.conf; then
+                    echo "default linux-t2.conf" | sudo tee -a /boot/loader/loader.conf >/dev/null
+                else
+                    sudo sed -i 's/^default .*/default linux-t2.conf/' /boot/loader/loader.conf
+                fi
+            fi
+            log "Configured systemd-boot default entry: linux-t2.conf"
+        fi
+    elif command -v grub-mkconfig >/dev/null 2>&1; then
+        log "Updating GRUB configuration..."
+        sudo grub-mkconfig -o /boot/grub/grub.cfg 2>/dev/null || true
+    fi
+
+    log "T2 hardware packages and bootloader entry configured successfully!"
 else
-    warn "You are currently running kernel: $(uname -r)"
-    echo "If Wi-Fi, internal NVMe, or audio have missing devices on your 2018 Mac mini,"
-    echo "ensure you add the t2linux repository and install linux-t2:"
-    echo "See: https://wiki.t2linux.org/distributions/arch/installation/"
+    warn "Non-T2 hardware detected or Apple T2 device not found."
 fi
 
 # -----------------------------------------------------------------------------
