@@ -2,10 +2,9 @@
 # ##############################################################################
 # Arch Linux + Hyprland Setup & Dotfiles Installer
 # Configured for 2018 Mac mini (T2 / Intel UHD 630) and mouse-friendly workflow
-# Curated software suite: TUIs, modern shell, GUIs, browsers, AI tools & Cliamp
 # ##############################################################################
 
-set -euo pipefail
+set -u
 
 BOLD="$(tput bold 2>/dev/null || true)"
 GREEN="$(tput setaf 2 2>/dev/null || true)"
@@ -21,16 +20,59 @@ header() { echo -e "\n${BLUE}${BOLD}=== $* ===${RESET}"; }
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
-# Ensure NOT running as root (pacman and dotfiles must be handled by regular user with sudo)
+# -----------------------------------------------------------------------------
+# 0. PRE-FLIGHT CHECKS
+# -----------------------------------------------------------------------------
+header "0. Pre-Flight Checks"
+
+# Check 1: Root check
 if [[ "${EUID}" -eq 0 ]]; then
-    err "Do NOT run this script directly as root or with sudo."
-    err "Run it as your normal user: ./install.sh"
+    err "This installer should NOT be run directly as root."
+    err "Building AUR packages and deploying user configs to ~/.config requires a standard user account."
+    echo ""
+    echo "If you only have a root account right now, create a standard user by running:"
+    echo "  ${BOLD}useradd -m -G wheel -s /bin/bash <your-username>${RESET}"
+    echo "  ${BOLD}passwd <your-username>${RESET}"
+    echo "  ${BOLD}echo '%wheel ALL=(ALL:ALL) ALL' > /etc/sudoers.d/wheel${RESET}"
+    echo "  ${BOLD}su - <your-username>${RESET}"
+    echo "  ${BOLD}cd ${SCRIPT_DIR} && ./install.sh${RESET}"
     exit 1
 fi
 
+# Check 2: Sudo availability
+if ! command -v sudo >/dev/null 2>&1; then
+    err "'sudo' is not installed."
+    echo "Please install sudo and configure your user by running (as root):"
+    echo "  ${BOLD}su -c 'pacman -Syu --noconfirm sudo && echo \"%wheel ALL=(ALL:ALL) ALL\" > /etc/sudoers.d/wheel'${RESET}"
+    exit 1
+fi
+
+# Check 3: Sudo permissions test
+if ! sudo -v 2>/dev/null; then
+    warn "Testing sudo privileges..."
+    if ! sudo true; then
+        err "Your user does not have sudo privileges."
+        echo "Ensure your user is in the 'wheel' group and wheel has sudo access in /etc/sudoers."
+        exit 1
+    fi
+fi
+
+# Check 4: Internet connectivity
+log "Checking network connectivity..."
+if ! curl -s --head https://archlinux.org >/dev/null 2>&1 && ! ping -c 1 -W 3 1.1.1.1 >/dev/null 2>&1; then
+    err "No active internet connection detected."
+    echo ""
+    echo "To connect to Wi-Fi from the command line, run:"
+    echo "  ${BOLD}nmcli device wifi connect 'Your_SSID' password 'Your_Password'${RESET}"
+    echo "Or run the interactive menu:"
+    echo "  ${BOLD}nmtui${RESET}"
+    exit 1
+fi
+log "Network connection verified."
+
 header "Arch + Hyprland Bootstrap"
-echo "This script will install your curated workstation suite:"
-echo " 1. Desktop & graphics drivers (Intel UHD 630, Hyprland, Waybar)"
+echo "This script will install:"
+echo " 1. Desktop & graphics drivers (Intel UHD 630, Hyprland, Waybar, Mako, Foot)"
 echo " 2. Terminal TUIs (btop, dua-cli, fastfetch, tmux, cliamp)"
 echo " 3. Modern shell tools (zoxide, fzf, ripgrep, fd, bat, eza, tldr, yt-dlp)"
 echo " 4. Graphical apps (Localsend, Imv, Mpv, Disks, Obsidian, Evince, Xournal++, LibreOffice, Pinta, OBS, Kdenlive)"
@@ -46,23 +88,19 @@ if [[ ! "${confirm}" =~ ^[Yy]$ ]]; then
 fi
 
 # -----------------------------------------------------------------------------
-# 1. UPDATE AND INSTALL PACMAN PACKAGES
+# 1. UPDATE AND INSTALL OFFICIAL PACMAN PACKAGES
 # -----------------------------------------------------------------------------
-header "1. Installing Packages via pacman"
+header "1. Installing Official Packages via pacman"
 
-PACKAGES=(
-    # --- Base Build Tools ---
+# Core desktop packages (critical)
+CORE_PACKAGES=(
     base-devel
     git
     curl
     jq
-
-    # --- Graphics Drivers (Intel UHD 630 on 2018 Mac mini) ---
     mesa
     vulkan-intel
     intel-media-driver
-
-    # --- Compositor & Wayland Session ---
     hyprland
     xdg-desktop-portal-hyprland
     xdg-desktop-portal-gtk
@@ -70,43 +108,44 @@ PACKAGES=(
     hyprpaper
     hyprlock
     hypridle
-
-    # --- Status Bar & Launcher ---
     waybar
-    rofi-wayland
+    rofi
     mako
     libnotify
-
-    # --- Terminal & File Manager ---
     foot
     thunar
     thunar-volman
     gvfs
     tumbler
     file-roller
-
-    # --- Audio (PipeWire) ---
     pipewire
     pipewire-audio
     pipewire-pulse
     pipewire-alsa
     wireplumber
     pavucontrol
-
-    # --- Network & Bluetooth ---
     networkmanager
     network-manager-applet
     bluez
     bluez-utils
     blueman
+    ttf-jetbrains-mono-nerd
+    noto-fonts
+    noto-fonts-emoji
+    papirus-icon-theme
+    grim
+    slurp
+    wl-clipboard
+    brightnessctl
+    playerctl
+)
 
-    # --- Terminal TUIs ---
+# Productivity, apps, and tools
+APP_PACKAGES=(
     btop
     dua-cli
     fastfetch
     tmux
-
-    # --- Modern Shell Replacements ---
     zoxide
     fzf
     ripgrep
@@ -115,55 +154,38 @@ PACKAGES=(
     eza
     tealdeer
     yt-dlp
-
-    # --- GUI Desktop & Utilities ---
     imv
     mpv
     gnome-disk-utility
-
-    # --- GUI Notes & Office ---
     obsidian
     evince
     xournalpp
     libreoffice-fresh
-
-    # --- GUI Creative & Media ---
     pinta
     obs-studio
     kdenlive
-
-    # --- Development & Code ---
     neovim
     gh
-
-    # --- Web Browsers ---
     firefox
     chromium
-
-    # --- Communication & Chat ---
     telegram-desktop
     discord
-
-    # --- Local AI Models ---
     ollama
     llama.cpp
-
-    # --- Utilities, Desktop Tools & Theming ---
-    grim
-    slurp
-    wl-clipboard
-    brightnessctl
-    playerctl
-    papirus-icon-theme
-
-    # --- Required Fonts ---
-    ttf-jetbrains-mono-nerd
-    noto-fonts
-    noto-fonts-emoji
 )
 
-log "Updating pacman mirrors and installing official packages..."
-sudo pacman -Syu --needed "${PACKAGES[@]}"
+log "Updating pacman databases and installing core desktop packages..."
+if ! sudo pacman -Syu --needed --noconfirm "${CORE_PACKAGES[@]}"; then
+    warn "Batch installation encountered an issue. Attempting fallback installation..."
+    for pkg in "${CORE_PACKAGES[@]}"; do
+        sudo pacman -S --needed --noconfirm "$pkg" || warn "Could not install $pkg"
+    done
+fi
+
+log "Installing application and utility packages..."
+for pkg in "${APP_PACKAGES[@]}"; do
+    sudo pacman -S --needed --noconfirm "$pkg" 2>/dev/null || warn "Optional package '$pkg' not found in repos, skipping."
+done
 
 # -----------------------------------------------------------------------------
 # 2. SYSTEM SERVICES
@@ -171,10 +193,10 @@ sudo pacman -Syu --needed "${PACKAGES[@]}"
 header "2. Enabling Essential Services"
 
 log "Enabling NetworkManager..."
-sudo systemctl enable --now NetworkManager
+sudo systemctl enable --now NetworkManager 2>/dev/null || true
 
 log "Enabling Bluetooth..."
-sudo systemctl enable --now bluetooth
+sudo systemctl enable --now bluetooth 2>/dev/null || true
 
 log "Enabling Ollama service (Local AI models)..."
 sudo systemctl enable --now ollama 2>/dev/null || true
@@ -200,26 +222,35 @@ fi
 # -----------------------------------------------------------------------------
 # 4. AUR HELPER (YAY) & AUR PACKAGES
 # -----------------------------------------------------------------------------
-header "4. Installing AUR Packages (Zen Browser, LocalSend, Mise, LM Studio)"
+header "4. Installing AUR Packages (Rofi-Wayland, Zen Browser, LocalSend, Mise, LM Studio)"
 
 if ! command -v yay >/dev/null 2>&1; then
     log "Installing yay (AUR helper)..."
     YAY_BUILD_DIR="$(mktemp -d)"
-    git clone https://aur.archlinux.org/yay-bin.git "${YAY_BUILD_DIR}"
-    (cd "${YAY_BUILD_DIR}" && makepkg -si --noconfirm)
-    rm -rf "${YAY_BUILD_DIR}"
-    log "yay installed successfully."
+    if git clone https://aur.archlinux.org/yay-bin.git "${YAY_BUILD_DIR}"; then
+        (cd "${YAY_BUILD_DIR}" && makepkg -si --noconfirm) || warn "Failed to build yay-bin."
+        rm -rf "${YAY_BUILD_DIR}"
+    else
+        warn "Could not clone yay-bin repository."
+    fi
 fi
 
-AUR_PACKAGES=(
-    zen-browser-bin
-    localsend-bin
-    mise-bin
-    lm-studio-bin
-)
-
-log "Installing AUR packages..."
-yay -S --needed --noconfirm "${AUR_PACKAGES[@]}" || warn "Some AUR packages could not be installed automatically."
+if command -v yay >/dev/null 2>&1; then
+    AUR_PACKAGES=(
+        rofi-wayland
+        zen-browser-bin
+        localsend-bin
+        mise-bin
+        lm-studio-bin
+    )
+    log "Installing AUR packages..."
+    for pkg in "${AUR_PACKAGES[@]}"; do
+        log "Installing ${pkg}..."
+        yay -S --needed --noconfirm "${pkg}" || warn "Could not install ${pkg} from AUR, skipping."
+    done
+else
+    warn "yay is not available; skipping AUR packages for now."
+fi
 
 # -----------------------------------------------------------------------------
 # 5. DOTFILES & HELPER SCRIPTS
@@ -288,12 +319,14 @@ mkdir -p "${HOME}/Pictures/Screenshots"
 header "6. Setting Up Shell Aliases & Hooks"
 
 SHELL_RC="${HOME}/.bashrc"
-if [[ -n "${ZSH_VERSION:-}" || "${SHELL}" =~ zsh$ ]]; then
+if [[ -n "${ZSH_VERSION:-}" || "${SHELL:-}" =~ zsh$ ]]; then
     SHELL_RC="${HOME}/.zshrc"
 fi
 
-log "Adding convenient aliases and hooks to ${SHELL_RC}..."
-cat << 'EOF' >> "${SHELL_RC}"
+touch "${SHELL_RC}"
+if ! grep -q "Modern CLI Aliases" "${SHELL_RC}" 2>/dev/null; then
+    log "Adding convenient aliases and hooks to ${SHELL_RC}..."
+    cat << 'EOF' >> "${SHELL_RC}"
 
 # --- Modern CLI Aliases & Tools ---
 if command -v eza >/dev/null 2>&1; then
@@ -307,13 +340,14 @@ if command -v bat >/dev/null 2>&1; then
 fi
 
 if command -v zoxide >/dev/null 2>&1; then
-    eval "$(zoxide init $(basename $SHELL))"
+    eval "$(zoxide init $(basename ${SHELL:-bash}))"
 fi
 
 if command -v tealdeer >/dev/null 2>&1; then
     alias tldr="tealdeer"
 fi
 EOF
+fi
 
 # Update tldr cache
 if command -v tldr >/dev/null 2>&1; then
@@ -341,7 +375,7 @@ header "Installation Complete! 🎉"
 echo ""
 echo "Your desktop and curated software suite are installed and configured."
 echo "To launch your session:"
-echo "  1. If currently in TTY, launch Hyprland by running:"
+echo "  1. Launch Hyprland by running:"
 echo "       ${BOLD}Hyprland${RESET}"
 echo ""
 echo "Quick Shortcuts Cheatsheet:"

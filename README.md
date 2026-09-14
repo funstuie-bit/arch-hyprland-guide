@@ -69,18 +69,40 @@ Reboot into your new Arch Linux system.
 
 ## 3. Quick Setup (Automated)
 
-Once logged into your new Arch Linux terminal as your regular user:
+Once booted into your new Arch Linux terminal:
 
+### Step 1: Connect to Internet (if on Wi-Fi)
 ```bash
-# 1. Clone this repository
+# Connect directly:
+nmcli device wifi connect "Your_SSID" password "Your_Password"
+
+# Or use the interactive text menu:
+nmtui
+```
+
+### Step 2: Ensure Git and Sudo Are Ready
+On a minimal Arch install, `git` is not installed by default. Install it:
+```bash
+sudo pacman -Sy --needed --noconfirm git
+```
+*(If you are logged in as `root`, create your standard user and configure sudo first:)*
+```bash
+useradd -m -G wheel -s /bin/bash yourusername
+passwd yourusername
+pacman -Sy --needed --noconfirm sudo
+echo '%wheel ALL=(ALL:ALL) ALL' > /etc/sudoers.d/wheel
+su - yourusername
+```
+
+### Step 3: Clone and Run the Setup
+As your regular user:
+```bash
 git clone https://github.com/funstuie-bit/arch-hyprland-guide.git
 cd arch-hyprland-guide
-
-# 2. Run the bootstrap installer
 ./install.sh
 ```
 
-The script will:
+The script includes automatic pre-flight checks and will:
 1. Install Intel UHD 630 drivers, Hyprland, Waybar, Rofi, Foot, PipeWire audio, fonts, and utilities.
 2. Install your curated software suite (TUIs, modern shell, GUIs, browsers, and AI tools).
 3. Install **Cliamp** terminal music player directly into `/usr/local/bin/cliamp`.
