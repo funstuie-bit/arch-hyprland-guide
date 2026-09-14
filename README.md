@@ -134,7 +134,11 @@ Hyprland
 * **`zen-browser`**: Modern Firefox fork focused on vertical tabs, spaces, and speed.
 * **`chromium`**: Fast open-source Chromium browser.
 
-### 5. Development & AI Tools
+### 5. Communication & Chat
+* **`telegram-desktop`**: Official fast, native Telegram messaging app.
+* **`discord`**: Official Discord voice, video, and community chat client.
+
+### 6. Development & AI Tools
 * **`neovim`**: Modern terminal code editor.
 * **`mise-bin`**: Universal runtime manager for Node.js, Python, Ruby, Go, and Rust.
 * **`gh`**: Official GitHub command-line interface.

@@ -34,7 +34,7 @@ echo " 1. Desktop & graphics drivers (Intel UHD 630, Hyprland, Waybar)"
 echo " 2. Terminal TUIs (btop, dua-cli, fastfetch, tmux, cliamp)"
 echo " 3. Modern shell tools (zoxide, fzf, ripgrep, fd, bat, eza, tldr, yt-dlp)"
 echo " 4. Graphical apps (Localsend, Imv, Mpv, Disks, Obsidian, Evince, Xournal++, LibreOffice, Pinta, OBS, Kdenlive)"
-echo " 5. Browsers (Firefox, Chromium, Zen Browser)"
+echo " 5. Browsers & Messaging (Firefox, Chromium, Zen Browser, Telegram, Discord)"
 echo " 6. Development & AI tools (Neovim, GitHub CLI, Ollama, Llama.cpp, LM Studio, CLI Agents)"
 echo " 7. Mouse-friendly dotfiles, Super+K cheatsheet, and crash diagnosis"
 echo ""
@@ -139,6 +139,10 @@ PACKAGES=(
     # --- Web Browsers ---
     firefox
     chromium
+
+    # --- Communication & Chat ---
+    telegram-desktop
+    discord
 
     # --- Local AI Models ---
     ollama
