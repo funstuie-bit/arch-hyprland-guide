@@ -5,9 +5,10 @@ A lightweight, transparent, and independently configured Arch Linux + Hyprland d
 This setup extracts the best productivity innovations of Omarchy into a **clean, modular "Lite" build**—without DHH's monolithic Lua layer, forced branding, proprietary update mechanisms, or opinionated bloat.
 
 ### Key Features
-- **🤖 Built-in AI Agent & 1-Click Crash Diagnosis:** System crashes monitored via `systemd-coredump` send a notification. Clicking it opens a dedicated Foot terminal running your default agent (`agy`, `claude`, `codex`, or `opencode`) with the crash trace and resolution prompt pre-loaded.
+- **🤖 Built-in AI Agent & 1-Click Crash Diagnosis:** System crashes monitored via `systemd-coredump` send a notification. Clicking it opens a dedicated Foot terminal running your default agent (`agy`, `claude`, `codex`, `opencode`, or `omp`) with the crash trace and resolution prompt pre-loaded.
 - **⌨️ `Super + K` Cheatsheet Popup:** Searchable, categorized hotkey and mouse guide powered by Rofi. No memorization required.
 - **🎵 Cliamp Retro Music Player:** Terminal-based music player inspired by Winamp 2.x with built-in lo-fi streams (`Super + M`).
+- **📦 Curated Software Suite:** Fast TUIs (`btop`, `dua-cli`, `fastfetch`, `tmux`), modern CLI replacements (`zoxide`, `fzf`, `ripgrep`, `fd`, `bat`, `eza`, `tldr`, `yt-dlp`), and graphical apps (`obsidian`, `localsend`, `libreoffice`, `imv`, `mpv`, `pinta`, `obs-studio`, `kdenlive`, `firefox`, `zen-browser`, `chromium`, `ollama`, `llama.cpp`).
 - **🖱️ Mouse-Friendly Hybrid Workflow:** Natural border-hover resizing (no keys required), `Super + Left-Click Drag` to move, `Super + Right-Click Drag` to resize, and `Super + Middle-Click` to toggle floating.
 - **⚡ Wayland-Native Performance:** Foot terminal, Waybar, Rofi-Wayland, Mako notifications, and Thunar file manager with zero unnecessary overhead.
 - **🚀 1-Command Automated Installer:** Run `./install.sh` on a fresh Arch installation to set up packages, services, and dotfiles.
@@ -79,10 +80,12 @@ cd arch-hyprland-guide
 
 The script will:
 1. Install Intel UHD 630 drivers, Hyprland, Waybar, Rofi, Foot, PipeWire audio, fonts, and utilities.
-2. Install **Cliamp** terminal music player directly into `/usr/local/bin/cliamp`.
-3. Enable `NetworkManager` and `bluetooth` system services.
-4. Back up existing configs and deploy mouse-friendly dotfiles to `~/.config/`.
-5. Set up the AI crash diagnosis daemon and default agent configuration.
+2. Install your curated software suite (TUIs, modern shell, GUIs, browsers, and AI tools).
+3. Install **Cliamp** terminal music player directly into `/usr/local/bin/cliamp`.
+4. Install `yay` and AUR packages (`zen-browser-bin`, `localsend-bin`, `mise-bin`, `lm-studio-bin`).
+5. Enable `NetworkManager`, `bluetooth`, and `ollama` system services.
+6. Back up existing configs and deploy mouse-friendly dotfiles to `~/.config/`.
+7. Set up the AI crash diagnosis daemon and default agent configuration.
 
 To start your graphical desktop, run:
 ```bash
@@ -91,21 +94,52 @@ Hyprland
 
 ---
 
-## 4. "Lite" Omarchy Features Explained
+## 4. Software Suite Installed in This Build
 
-### 🤖 AI Agent Integration & Crash Diagnosis
-* **Crash Watcher:** A background service (`~/.config/hypr/bin/crash-watch.sh`) monitors `journalctl` for process segfaults via `systemd-coredump`.
-* **1-Click Diagnosis:** When an application crashes, a desktop notification appears:  
-  *`"Process crashed: [name] — Click to diagnose with AI"`*  
-  Clicking the toast instantly launches your default AI agent in a dedicated Foot window, pre-loaded with the coredump stack trace and a prompt asking how to fix it.
-* **Launch Agent Anytime:** Press **`Super + Shift + A`** to launch your default agent in a floating terminal.
-* **Switch Default Agent:** Press **`Super + Alt + A`** (or edit `~/.config/default-agent`) to choose between `agy` (Google Antigravity CLI), `claude` (Claude Code), `codex`, or `opencode`.
+### 1. Terminal Utilities & TUIs
+* **`cliamp`**: Retro Winamp 2.x music player with built-in lo-fi streams (`Super + M`).
+* **`btop`**: Beautiful resource monitor for CPU, RAM, disks, and processes (`Super + Ctrl + T`).
+* **`dua-cli`**: Fast interactive disk space explorer (`dua i`).
+* **`fastfetch`**: Fast, modern system information banner.
+* **`tmux`**: Terminal multiplexer for persistent sessions, tabs, and splits.
 
-### ⌨️ Interactive `Super + K` Cheatsheet
-Pressing **`Super + K`** triggers a floating, searchable Rofi popup displaying all system shortcuts categorized by function (Apps, AI, Mouse, Audio, Window management). You can filter with fuzzy search or select items with the mouse.
+### 2. Enhanced Shell Replacements
+* **`zoxide` (`z`)**: Intelligent directory jumper that learns your habits (`z doc` jumps straight to `~/Documents/...`).
+* **`fzf`**: Interactive fuzzy finder for files and shell history (`Ctrl + R`).
+* **`ripgrep` (`rg`)**: Ultra-fast regex text search through entire projects.
+* **`fd`**: Intuitive, colorized replacement for `find`.
+* **`bat`**: Syntax-highlighted `cat` with line numbers and git diffs.
+* **`eza`**: Modern, colorized `ls` with tree views and icons.
+* **`tealdeer` (`tldr`)**: Instant, practical command examples instead of 20-page man pages.
+* **`yt-dlp`**: Download video and audio from hundreds of sites directly from the terminal.
 
-### 🎵 Cliamp Music Player
-Press **`Super + M`** (or `Super + Shift + Alt + M`) to launch [Cliamp](https://www.cliamp.stream/), a retro Winamp 2.x-inspired terminal music player with built-in lo-fi and radio streams.
+### 3. Graphical Applications (GUIs)
+* **`localsend`**: Cross-platform, private AirDrop alternative for local network sharing.
+* **`obsidian`**: Extensible Markdown note-taking app (`Super + Shift + O`).
+* **`evince`**: Clean GNOME document and PDF viewer.
+* **`xournalpp`**: PDF annotation, highlighting, and handwriting tool.
+* **`libreoffice-fresh`**: Full office suite (Writer, Calc, Impress).
+* **`pinta`**: Simple paint and image editing program.
+* **`obs-studio`**: Screen recording and live streaming studio.
+* **`kdenlive`**: Multi-track video editor.
+* **`gnome-disk-utility`**: Format drives, check SMART health, and manage partitions.
+* **`imv`**: Ultra-fast Wayland image viewer.
+* **`mpv`**: Minimalist media player with hardware video acceleration.
+* **`pavucontrol`**: Audio mixer and volume control GUI.
+
+### 4. Web Browsers
+* **`firefox`**: Native Wayland Firefox browser.
+* **`zen-browser`**: Modern Firefox fork focused on vertical tabs, spaces, and speed.
+* **`chromium`**: Fast open-source Chromium browser.
+
+### 5. Development & AI Tools
+* **`neovim`**: Modern terminal code editor.
+* **`mise-bin`**: Universal runtime manager for Node.js, Python, Ruby, Go, and Rust.
+* **`gh`**: Official GitHub command-line interface.
+* **`ollama`**: Local model runner for open-weights models like Llama 3 (`systemctl status ollama`).
+* **`llama.cpp`**: Fast local LLM inference engine.
+* **`lm-studio`**: Desktop GUI for downloading and chatting with local AI models.
+* **AI Coding Agents**: Compatible with `agy` (Google Antigravity), `claude` (Claude Code), `codex`, `opencode`, and `omp` (Oh My Pi).
 
 ---
 
@@ -156,19 +190,22 @@ Your mouse cursor will not jump or snap across windows when switching focus.
 | `Super + K` | **Shortcuts Cheatsheet** | Searchable popup listing all key/mouse shortcuts |
 | `Super + Space` | **App Launcher** | Opens Rofi application search (mouse clickable) |
 | `Super + Enter` | **Terminal** | Opens Foot terminal emulator |
-| `Super + Shift + A` | **Launch AI Agent** | Opens default agent (`agy`, `claude`, etc.) |
-| `Super + Alt + A` | **Pick AI Agent** | Select / change default AI agent |
+| `Super + B` | **Web Browser** | Opens default web browser (Firefox/Zen/Chromium) |
+| `Super + Shift + O`| **Obsidian** | Opens Obsidian notes |
+| `Super + Ctrl + T` | **Activity Monitor** | Opens `btop` system monitor in floating window |
 | `Super + M` | **Cliamp Music** | Launches retro terminal music player |
+| `Super + Shift + A`| **Launch AI Agent** | Opens default agent (`agy`, `claude`, `codex`, `opencode`, `omp`) |
+| `Super + Alt + A` | **Pick AI Agent** | Select / change default AI agent |
 | `Super + E` | **File Manager** | Opens Thunar graphical file manager |
 | `Super + Q` | **Close Window** | Closes the focused window |
 | `Super + V` | **Toggle Floating** | Detaches window from tiling grid |
 | `Super + F` | **Fullscreen** | Toggles fullscreen for active window |
 | `Super + L` | **Lock Screen** | Locks session via `hyprlock` |
-| `Super + Shift + S` | **Screenshot Area** | Select rectangular area with mouse and copy to clipboard |
+| `Super + Shift + S`| **Screenshot Area** | Select rectangular area with mouse and copy to clipboard |
 | `PrintScreen` | **Full Screenshot** | Saves screenshot to `~/Pictures/Screenshots/` |
-| `Super + 1 .. 9, 0` | **Workspaces** | Switch to workspaces 1 through 10 |
-| `Super + Shift + 1 .. 0` | **Move to Workspace**| Move active window to chosen workspace |
-| `Super + Arrow Keys` | **Focus Window** | Move focus to left, right, up, or down window |
+| `Super + 1 .. 9, 0`| **Workspaces** | Switch to workspaces 1 through 10 |
+| `Super + Shift + 1..0`| **Move to Workspace**| Move active window to chosen workspace |
+| `Super + Arrow Keys`| **Focus Window** | Move focus to left, right, up, or down window |
 
 ---
 
@@ -186,7 +223,7 @@ arch-hyprland-guide/
     │   ├── hyprpaper.conf      # Wallpaper daemon config
     │   └── bin/
     │       ├── shortcuts-menu.sh  # Super + K searchable cheatsheet
-    │       ├── default-agent.sh   # AI agent selector & launcher
+    │       ├── default-agent.sh   # AI agent selector & launcher (agy, claude, codex, opencode, omp)
     │       ├── crash-watch.sh     # Background systemd coredump monitor
     │       └── crash-diagnose.sh  # Auto-diagnosis prompt generator
     ├── waybar/

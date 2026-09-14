@@ -20,6 +20,7 @@ pick_agent() {
         "claude    (Claude Code)"
         "codex     (OpenAI Codex CLI)"
         "opencode  (OpenCode)"
+        "omp       (Oh My Pi)"
     )
 
     local choice

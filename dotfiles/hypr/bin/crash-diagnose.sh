@@ -63,6 +63,9 @@ case "$AGENT" in
     opencode)
         launch_cmd="opencode \"\$(cat '$PROMPT_FILE')\""
         ;;
+    omp)
+        launch_cmd="omp \"\$(cat '$PROMPT_FILE')\""
+        ;;
     agy|*)
         launch_cmd="agy \"\$(cat '$PROMPT_FILE')\""
         ;;
