@@ -2,12 +2,17 @@
     "layer": "top",
     "position": "top",
     "height": 38,
-    "spacing": 6,
+    "spacing": 4,
     "margin-top": 6,
     "margin-left": 10,
     "margin-right": 10,
 
     "modules-left": [
+        "custom/menu",
+        "custom/term",
+        "custom/browser",
+        "custom/files",
+        "custom/shortcuts",
         "hyprland/workspaces",
         "hyprland/window"
     ],
@@ -23,6 +28,37 @@
         "custom/power"
     ],
 
+    "custom/menu": {
+        "format": "  Start",
+        "tooltip-format": "Applications Menu\nLeft-click: Open App Launcher (Super + Space)\nRight-click: Shortcuts Cheatsheet (Super + K)",
+        "on-click": "rofi -show drun -show-icons",
+        "on-click-right": "/home/stu/.config/hypr/bin/shortcuts-menu.sh"
+    },
+
+    "custom/term": {
+        "format": "",
+        "tooltip-format": "Terminal (Super + Return)",
+        "on-click": "foot"
+    },
+
+    "custom/browser": {
+        "format": "󰈹",
+        "tooltip-format": "Web Browser (Super + B)",
+        "on-click": "xdg-open http:// || firefox || zen-browser || chromium"
+    },
+
+    "custom/files": {
+        "format": "󰝰",
+        "tooltip-format": "File Manager (Super + E)",
+        "on-click": "thunar"
+    },
+
+    "custom/shortcuts": {
+        "format": "󰌌",
+        "tooltip-format": "Shortcuts Cheatsheet (Super + K)",
+        "on-click": "/home/stu/.config/hypr/bin/shortcuts-menu.sh"
+    },
+
     "hyprland/workspaces": {
         "disable-scroll": false,
         "all-outputs": true,
@@ -32,7 +68,7 @@
 
     "hyprland/window": {
         "format": "{title}",
-        "max-length": 40,
+        "max-length": 35,
         "separate-outputs": true
     },
 
@@ -80,6 +116,6 @@
     "custom/power": {
         "format": " ",
         "tooltip": false,
-        "on-click": "wlogout || hyprlock"
+        "on-click": "hyprlock"
     }
 }
