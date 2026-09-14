@@ -80,7 +80,30 @@ nmcli device wifi connect "Your_SSID" password "Your_Password"
 nmtui
 ```
 
-### Step 2: Ensure Git and Sudo Are Ready
+### Step 2: Enable SSH (Recommended for Easy Setup & Copy-Pasting)
+Enabling SSH lets you log in from your Mac/laptop terminal so you can easily copy and paste commands:
+
+1. **On your Mac mini (in the TTY):**
+   ```bash
+   sudo pacman -Sy --needed --noconfirm openssh
+   sudo systemctl enable --now sshd
+   ip -br a
+   ```
+   *(Find the `192.168.x.x` address next to `wlan0` or Ethernet)*
+
+2. **From your laptop terminal:**
+   ```bash
+   ssh yourusername@<MAC_MINI_IP>
+   ```
+
+*(Optional: Transfer your logged-in `agy` token directly from your Mac to the Mac mini:)*
+```bash
+# Run this from your Mac terminal:
+ssh yourusername@<MAC_MINI_IP> "mkdir -p ~/.gemini/antigravity-cli"
+scp ~/.gemini/antigravity-cli/antigravity-oauth-token yourusername@<MAC_MINI_IP>:~/.gemini/antigravity-cli/
+```
+
+### Step 3: Ensure Git and Sudo Are Ready
 On a minimal Arch install, `git` is not installed by default. Install it:
 ```bash
 sudo pacman -Sy --needed --noconfirm git
@@ -94,7 +117,7 @@ echo '%wheel ALL=(ALL:ALL) ALL' > /etc/sudoers.d/wheel
 su - yourusername
 ```
 
-### Step 3: Clone and Run the Setup
+### Step 4: Clone and Run the Setup
 As your regular user:
 ```bash
 git clone https://github.com/funstuie-bit/arch-hyprland-guide.git
