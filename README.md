@@ -30,7 +30,9 @@ The 2018 Mac mini contains Apple's **T2 Security Chip**, which secures the inter
 
 ### Step 2: Prepare T2-Aware Arch Installation Media
 Standard vanilla Arch ISOs lack drivers for Apple T2 NVMe controllers, internal audio, and Wi-Fi.
-1. Download the pre-patched **T2 Arch Linux ISO** from the [T2 Linux Arch Guide](https://wiki.t2linux.org/distributions/arch/installation/).
+1. Download the pre-patched **T2 Arch Linux ISO** directly from GitHub Releases:
+   - **Direct ISO Download:** [t2linux/archiso-t2 Releases](https://github.com/t2linux/archiso-t2/releases) (e.g., [Release 2026.03.07](https://github.com/t2linux/archiso-t2/releases/tag/2026.03.07))
+   - **Installation Documentation:** [T2 Linux Arch Installation Guide](https://wiki.t2linux.org/distributions/arch/installation/)
 2. Flash the ISO to a USB flash drive using BalenaEtcher, Raspberry Pi Imager, or `dd`:
    ```bash
    sudo dd if=archlinux-t2-*.iso of=/dev/sdX bs=4M status=progress oflag=sync
