@@ -1,0 +1,10 @@
+[Desktop Entry]
+Name=Cliamp
+GenericName=Music Player
+Comment=Terminal music player inspired by Winamp
+Exec=foot -T Cliamp -e cliamp
+Icon=multimedia-audio-player
+Terminal=false
+Type=Application
+Categories=AudioVideo;Audio;Player;
+Keywords=music;player;winamp;lofi;stream;

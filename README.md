@@ -2,11 +2,15 @@
 
 A lightweight, transparent, and independently configured Arch Linux + Hyprland desktop designed for the **2018 Intel Mac mini (T2 / Intel UHD 630)**.
 
-This repository provides both a complete guide and pre-configured dotfiles tailored for a **hybrid mouse + keyboard workflow**:
-- **Natural mouse interaction**: Resize windows simply by dragging their borders (no modifier keys required), drag and position windows with `Super + Left Click`, and toggle floating with `Super + Middle Click`.
-- **Fast keyboard control**: Launch apps, switch workspaces, and manage windows with clean, intuitive shortcuts.
-- **Lightweight & modular**: Fast Wayland components (`hyprland`, `waybar`, `rofi-wayland`, `foot`, `thunar`, `mako`) with zero bloated layers or unwanted third-party dependencies.
-- **Automated setup**: A single, clean `install.sh` script to install packages, configure services, and deploy dotfiles.
+This setup extracts the best productivity innovations of Omarchy into a **clean, modular "Lite" build**—without DHH's monolithic Lua layer, forced branding, proprietary update mechanisms, or opinionated bloat.
+
+### Key Features
+- **🤖 Built-in AI Agent & 1-Click Crash Diagnosis:** System crashes monitored via `systemd-coredump` send a notification. Clicking it opens a dedicated Foot terminal running your default agent (`agy`, `claude`, `codex`, or `opencode`) with the crash trace and resolution prompt pre-loaded.
+- **⌨️ `Super + K` Cheatsheet Popup:** Searchable, categorized hotkey and mouse guide powered by Rofi. No memorization required.
+- **🎵 Cliamp Retro Music Player:** Terminal-based music player inspired by Winamp 2.x with built-in lo-fi streams (`Super + M`).
+- **🖱️ Mouse-Friendly Hybrid Workflow:** Natural border-hover resizing (no keys required), `Super + Left-Click Drag` to move, `Super + Right-Click Drag` to resize, and `Super + Middle-Click` to toggle floating.
+- **⚡ Wayland-Native Performance:** Foot terminal, Waybar, Rofi-Wayland, Mako notifications, and Thunar file manager with zero unnecessary overhead.
+- **🚀 1-Command Automated Installer:** Run `./install.sh` on a fresh Arch installation to set up packages, services, and dotfiles.
 
 ---
 
@@ -53,7 +57,7 @@ Once booted into the live environment:
    - **Audio:** PipeWire
    - **Network:** NetworkManager
    - **Kernel:** `linux-t2` (if prompted or on T2 ISO) or `linux` (add `t2linux` repository post-install)
-   - **Profile:** Minimal / No desktop environment initially (we install Hyprland in the next step)
+   - **Profile:** Minimal / No desktop environment initially
    - **User:** Create a standard user with `sudo` / `wheel` privileges
 
 Reboot into your new Arch Linux system.
@@ -74,9 +78,11 @@ cd arch-hyprland-guide
 ```
 
 The script will:
-1. Install all necessary graphics drivers (`mesa`, `vulkan-intel`, `intel-media-driver`), Hyprland desktop packages, audio, fonts, and utilities.
-2. Enable `NetworkManager` and `bluetooth` system services.
-3. Back up any existing config and link the pre-configured dotfiles into `~/.config/`.
+1. Install Intel UHD 630 drivers, Hyprland, Waybar, Rofi, Foot, PipeWire audio, fonts, and utilities.
+2. Install **Cliamp** terminal music player directly into `/usr/local/bin/cliamp`.
+3. Enable `NetworkManager` and `bluetooth` system services.
+4. Back up existing configs and deploy mouse-friendly dotfiles to `~/.config/`.
+5. Set up the AI crash diagnosis daemon and default agent configuration.
 
 To start your graphical desktop, run:
 ```bash
@@ -85,12 +91,30 @@ Hyprland
 
 ---
 
-## 4. Mouse-Friendly Hyprland Workflow
+## 4. "Lite" Omarchy Features Explained
 
-Unlike strict keyboard-only configurations, this setup is tuned for comfortable mouse usage:
+### 🤖 AI Agent Integration & Crash Diagnosis
+* **Crash Watcher:** A background service (`~/.config/hypr/bin/crash-watch.sh`) monitors `journalctl` for process segfaults via `systemd-coredump`.
+* **1-Click Diagnosis:** When an application crashes, a desktop notification appears:  
+  *`"Process crashed: [name] — Click to diagnose with AI"`*  
+  Clicking the toast instantly launches your default AI agent in a dedicated Foot window, pre-loaded with the coredump stack trace and a prompt asking how to fix it.
+* **Launch Agent Anytime:** Press **`Super + Shift + A`** to launch your default agent in a floating terminal.
+* **Switch Default Agent:** Press **`Super + Alt + A`** (or edit `~/.config/default-agent`) to choose between `agy` (Google Antigravity CLI), `claude` (Claude Code), `codex`, or `opencode`.
+
+### ⌨️ Interactive `Super + K` Cheatsheet
+Pressing **`Super + K`** triggers a floating, searchable Rofi popup displaying all system shortcuts categorized by function (Apps, AI, Mouse, Audio, Window management). You can filter with fuzzy search or select items with the mouse.
+
+### 🎵 Cliamp Music Player
+Press **`Super + M`** (or `Super + Shift + Alt + M`) to launch [Cliamp](https://www.cliamp.stream/), a retro Winamp 2.x-inspired terminal music player with built-in lo-fi and radio streams.
+
+---
+
+## 5. Mouse-Friendly Hyprland Workflow
+
+Unlike strict keyboard-only setups, this configuration is optimized for natural mouse use:
 
 ### Natural Border Resizing
-You do not need to press keyboard shortcuts to resize windows. Hover your mouse over any window border or corner and click-drag to resize, exactly like macOS and Windows:
+Hover your mouse over any window border or corner and drag to resize, exactly like macOS and Windows—no modifier keys required:
 ```ini
 general {
     resize_on_border = true
@@ -99,38 +123,42 @@ general {
 }
 ```
 
-### No Cursor Warping
-Tiling compositors often jerk your mouse pointer across screens whenever a window changes focus. This configuration sets:
+### Stable Cursor Position
 ```ini
 cursor {
     no_warps = true
 }
 ```
-Your cursor stays wherever you placed it.
+Your mouse cursor will not jump or snap across windows when switching focus.
 
 ### Mouse Window Controls
 | Action | Binding |
 | :--- | :--- |
+| **Resize window directly** | Hover over border/corner and click-drag |
 | **Move window** | Hold `Super` + Left-Click Drag |
 | **Resize window** | Hold `Super` + Right-Click Drag |
 | **Toggle Floating** | Hold `Super` + Middle-Click (or `Super + V`) |
 | **Switch Workspaces** | Hold `Super` + Mouse Scroll Wheel |
 
 ### Interactive Status Bar (Waybar)
-- **Workspaces:** Click any workspace number to jump to it.
+- **Workspaces:** Click any number to jump to that workspace.
 - **Audio:** Scroll to increase/decrease volume. Left-click to mute. Right-click to open `pavucontrol` mixer.
 - **Network:** Click to open network connection manager (`nm-connection-editor`).
-- **Clock:** Displays formatted date/time with a calendar tooltip.
+- **Clock:** Displays formatted date/time with interactive calendar tooltip.
 - **Power:** Click power icon to lock screen or display power options.
 
 ---
 
-## 5. Keyboard Shortcuts Cheatsheet
+## 6. Shortcuts Cheatsheet
 
 | Shortcut | Action | Description |
 | :--- | :--- | :--- |
+| `Super + K` | **Shortcuts Cheatsheet** | Searchable popup listing all key/mouse shortcuts |
 | `Super + Space` | **App Launcher** | Opens Rofi application search (mouse clickable) |
 | `Super + Enter` | **Terminal** | Opens Foot terminal emulator |
+| `Super + Shift + A` | **Launch AI Agent** | Opens default agent (`agy`, `claude`, etc.) |
+| `Super + Alt + A` | **Pick AI Agent** | Select / change default AI agent |
+| `Super + M` | **Cliamp Music** | Launches retro terminal music player |
 | `Super + E` | **File Manager** | Opens Thunar graphical file manager |
 | `Super + Q` | **Close Window** | Closes the focused window |
 | `Super + V` | **Toggle Floating** | Detaches window from tiling grid |
@@ -144,16 +172,23 @@ Your cursor stays wherever you placed it.
 
 ---
 
-## 6. Repository Dotfiles Structure
+## 7. Repository Structure
 
 ```text
 arch-hyprland-guide/
 ├── install.sh                  # Automated bootstrap script
-├── README.md                   # Installation guide & documentation
+├── README.md                   # Complete guide & documentation
 └── dotfiles/
+    ├── applications/
+    │   └── cliamp.desktop      # Desktop launcher entry for Cliamp
     ├── hypr/
     │   ├── hyprland.conf       # Hyprland config (mouse borders, keybinds, rules)
-    │   └── hyprpaper.conf      # Wallpaper daemon config
+    │   ├── hyprpaper.conf      # Wallpaper daemon config
+    │   └── bin/
+    │       ├── shortcuts-menu.sh  # Super + K searchable cheatsheet
+    │       ├── default-agent.sh   # AI agent selector & launcher
+    │       ├── crash-watch.sh     # Background systemd coredump monitor
+    │       └── crash-diagnose.sh  # Auto-diagnosis prompt generator
     ├── waybar/
     │   ├── config.jsonc        # Clickable status bar modules
     │   └── style.css           # Modern translucent pill theme
@@ -163,36 +198,6 @@ arch-hyprland-guide/
     │   └── foot.ini            # Lightweight Wayland terminal
     └── mako/
         └── config              # Desktop notification styling
-```
-
----
-
-## 7. Manual Installation & Packages Breakdown
-
-If you prefer installing packages manually without the `install.sh` script:
-
-```bash
-sudo pacman -Syu --needed \
-  mesa vulkan-intel intel-media-driver \
-  hyprland xdg-desktop-portal-hyprland xdg-desktop-portal-gtk \
-  hyprpolkitagent hyprpaper hyprlock hypridle \
-  waybar rofi-wayland mako libnotify \
-  foot thunar thunar-volman gvfs tumbler file-roller \
-  pipewire pipewire-audio pipewire-pulse pipewire-alsa wireplumber pavucontrol \
-  networkmanager network-manager-applet bluez bluez-utils blueman \
-  grim slurp wl-clipboard brightnessctl playerctl papirus-icon-theme \
-  ttf-jetbrains-mono-nerd noto-fonts noto-fonts-emoji
-```
-
-Enable system services:
-```bash
-sudo systemctl enable --now NetworkManager
-sudo systemctl enable --now bluetooth
-```
-
-Copy dotfiles into place:
-```bash
-cp -r dotfiles/* ~/.config/
 ```
 
 ---

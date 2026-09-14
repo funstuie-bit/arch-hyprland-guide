@@ -2,6 +2,7 @@
 # ##############################################################################
 # Arch Linux + Hyprland Setup & Dotfiles Installer
 # Configured for 2018 Mac mini (T2 / Intel UHD 630) and mouse-friendly workflow
+# Includes: AI error diagnosis, Super+K cheatsheet, and Cliamp music player
 # ##############################################################################
 
 set -euo pipefail
@@ -29,9 +30,11 @@ fi
 
 header "Arch + Hyprland Bootstrap"
 echo "This script will:"
-echo " 1. Install necessary desktop, graphics, audio, and font packages"
-echo " 2. Enable NetworkManager and Bluetooth system services"
-echo " 3. Back up and install mouse-friendly dotfiles to ~/.config"
+echo " 1. Install desktop, graphics, audio, fonts, and utility packages"
+echo " 2. Enable NetworkManager and Bluetooth services"
+echo " 3. Install Cliamp (retro terminal music player)"
+echo " 4. Back up and install mouse-friendly dotfiles to ~/.config"
+echo " 5. Configure AI agent diagnosis and Super+K cheatsheet"
 echo ""
 
 read -rp "Proceed with installation? [y/N]: " confirm
@@ -89,7 +92,9 @@ PACKAGES=(
     bluez-utils
     blueman
 
-    # --- Utilities & Theming ---
+    # --- Utilities, AI Tools & Theming ---
+    jq
+    curl
     grim
     slurp
     wl-clipboard
@@ -118,9 +123,27 @@ log "Enabling Bluetooth..."
 sudo systemctl enable --now bluetooth
 
 # -----------------------------------------------------------------------------
-# 3. DOTFILES INSTALLATION
+# 3. CLIAMP MUSIC PLAYER
 # -----------------------------------------------------------------------------
-header "3. Deploying Dotfiles to ~/.config"
+header "3. Installing Cliamp Music Player"
+
+if command -v cliamp >/dev/null 2>&1; then
+    log "Cliamp is already installed ($(cliamp --version 2>/dev/null || echo 'present'))."
+else
+    log "Downloading Cliamp (Terminal Music Player for lo-fi beats)..."
+    CLIAMP_URL="https://github.com/bjarneo/cliamp/releases/latest/download/cliamp-linux-amd64"
+    if sudo curl -fsSL "${CLIAMP_URL}" -o /usr/local/bin/cliamp; then
+        sudo chmod +x /usr/local/bin/cliamp
+        log "Cliamp installed successfully to /usr/local/bin/cliamp"
+    else
+        warn "Could not download Cliamp binary directly. You can install it later with: cargo install cliamp"
+    fi
+fi
+
+# -----------------------------------------------------------------------------
+# 4. DOTFILES INSTALLATION
+# -----------------------------------------------------------------------------
+header "4. Deploying Dotfiles to ~/.config"
 
 CONFIG_DIR="${HOME}/.config"
 BACKUP_DIR="${HOME}/.config_backup_$(date +'%Y%m%d_%H%M%S')"
@@ -156,13 +179,32 @@ for target in "${TARGETS[@]}"; do
     fi
 done
 
+# Ensure helper scripts in ~/.config/hypr/bin/ are executable
+if [[ -d "${CONFIG_DIR}/hypr/bin" ]]; then
+    chmod +x "${CONFIG_DIR}/hypr/bin/"*.sh
+    log "  Made ~/.config/hypr/bin scripts executable"
+fi
+
+# Install desktop entry for Cliamp
+mkdir -p "${HOME}/.local/share/applications"
+if [[ -f "${DOTFILES_SOURCE}/applications/cliamp.desktop" ]]; then
+    cp "${DOTFILES_SOURCE}/applications/cliamp.desktop" "${HOME}/.local/share/applications/"
+    log "  Installed Cliamp desktop entry"
+fi
+
+# Set default agent if none configured
+if [[ ! -f "${CONFIG_DIR}/default-agent" ]]; then
+    echo "agy" > "${CONFIG_DIR}/default-agent"
+    log "  Set default AI agent to 'agy' (change via Super+Alt+A or ~/.config/default-agent)"
+fi
+
 # Ensure pictures/screenshots folder exists
 mkdir -p "${HOME}/Pictures/Screenshots"
 
 # -----------------------------------------------------------------------------
-# 4. T2 LINUX HARDWARE CHECK
+# 5. T2 LINUX HARDWARE CHECK
 # -----------------------------------------------------------------------------
-header "4. Hardware Check (Apple T2 Mac mini)"
+header "5. Hardware Check (Apple T2 Mac mini)"
 
 if uname -r | grep -iq "t2"; then
     log "Apple T2-patched Linux kernel detected! (${BOLD}$(uname -r)${RESET})"
@@ -182,13 +224,17 @@ echo "Your desktop is now configured. To launch your session:"
 echo "  1. If currently in TTY, launch Hyprland by running:"
 echo "       ${BOLD}Hyprland${RESET}"
 echo ""
-echo "Quick Mouse & Key Shortcuts:"
-echo "  - ${BOLD}Resize Window:${RESET}     Hover over any window edge & drag (no keys needed!)"
-echo "  - ${BOLD}Move Window:${RESET}       Hold Super (Command) + Left Click Drag"
-echo "  - ${BOLD}Resize Window:${RESET}     Hold Super (Command) + Right Click Drag"
-echo "  - ${BOLD}Toggle Floating:${RESET}   Super + V  (or Super + Middle Click)"
-echo "  - ${BOLD}Launch Terminal:${RESET}   Super + Enter (foot)"
-echo "  - ${BOLD}Launch Apps:${RESET}       Super + Space (rofi)"
-echo "  - ${BOLD}File Manager:${RESET}      Super + E (thunar)"
-echo "  - ${BOLD}Screenshot Area:${RESET}   Super + Shift + S"
+echo "Quick Shortcuts Cheatsheet:"
+echo "  - ${BOLD}Shortcuts Palette:${RESET}  Super + K (Searchable popup cheatsheet)"
+echo "  - ${BOLD}Launch AI Agent:${RESET}    Super + Shift + A (Runs default agent)"
+echo "  - ${BOLD}Select AI Agent:${RESET}    Super + Alt + A (Choose agy, claude, codex, opencode)"
+echo "  - ${BOLD}Cliamp Music:${RESET}       Super + M (or Super + Shift + Alt + M)"
+echo "  - ${BOLD}Resize Window:${RESET}      Hover over window border & drag (no keys required!)"
+echo "  - ${BOLD}Move Window:${RESET}        Hold Super + Left Click Drag"
+echo "  - ${BOLD}Resize Window:${RESET}      Hold Super + Right Click Drag"
+echo "  - ${BOLD}Toggle Floating:${RESET}    Super + V  (or Super + Middle Click)"
+echo "  - ${BOLD}Terminal:${RESET}           Super + Enter (Foot)"
+echo "  - ${BOLD}App Launcher:${RESET}       Super + Space (Rofi)"
+echo "  - ${BOLD}File Manager:${RESET}       Super + E (Thunar)"
+echo "  - ${BOLD}Screenshot Area:${RESET}    Super + Shift + S"
 echo ""
