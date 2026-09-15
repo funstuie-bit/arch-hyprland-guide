@@ -395,6 +395,10 @@ EOF
         EXISTING_ENTRY="$(find /boot/loader/entries -maxdepth 1 -name '*.conf' ! -name 'linux-t2.conf' 2>/dev/null | head -n 1)"
         if [[ -n "$EXISTING_ENTRY" && -f "$EXISTING_ENTRY" ]]; then
             OPTIONS_LINE="$(grep -E '^options[[:space:]]' "$EXISTING_ENTRY" | head -n 1)"
+            # Ensure Intel FBC and PSR are disabled to prevent scanout glitches
+            if ! echo "${OPTIONS_LINE}" | grep -q "i915.enable_fbc=0"; then
+                OPTIONS_LINE="${OPTIONS_LINE} i915.enable_fbc=0 i915.enable_psr=0"
+            fi
             log "Creating systemd-boot entry /boot/loader/entries/linux-t2.conf..."
             sudo tee /boot/loader/entries/linux-t2.conf >/dev/null << EOF
 title   Arch Linux (linux-t2)
@@ -423,11 +427,61 @@ else
 fi
 
 # -----------------------------------------------------------------------------
+# 8. INTEL UHD 630 DISPLAY & DRIVER OPTIMIZATIONS
+# -----------------------------------------------------------------------------
+header "8. Intel UHD 630 Graphics Glitch Prevention"
+
+log "Configuring i915 module options to prevent framebuffer tearing and comb artifacts..."
+sudo tee /etc/modprobe.d/i915.conf >/dev/null << 'EOF'
+options i915 enable_fbc=0 enable_psr=0
+EOF
+
+log "Configuring Aquamarine Wayland environment..."
+if ! grep -q "AQ_NO_MODIFIERS" /etc/environment 2>/dev/null; then
+    echo "AQ_NO_MODIFIERS=1" | sudo tee -a /etc/environment >/dev/null
+fi
+
+log "Regenerating initramfs with updated module options..."
+sudo mkinitcpio -P 2>/dev/null || true
+
+# -----------------------------------------------------------------------------
+# 9. SEAMLESS AUTOLOGIN & STARTUP
+# -----------------------------------------------------------------------------
+header "9. Configuring Automatic Login & Desktop Autostart"
+
+CURRENT_USER="$(id -un)"
+log "Setting up autologin for user '${CURRENT_USER}' on tty1..."
+sudo mkdir -p /etc/systemd/system/getty@tty1.service.d
+sudo tee /etc/systemd/system/getty@tty1.service.d/autologin.conf >/dev/null << EOF
+[Service]
+ExecStart=
+ExecStart=-/sbin/agetty -o '-p -f -- \\\\u' --noclear --autologin ${CURRENT_USER} %I \$TERM
+EOF
+sudo systemctl daemon-reload
+
+log "Configuring ~/.bash_profile to autostart Hyprland on login..."
+touch "${HOME}/.bash_profile"
+if ! grep -q "exec Hyprland" "${HOME}/.bash_profile" 2>/dev/null; then
+    cat << 'EOF' >> "${HOME}/.bash_profile"
+
+# Intel UHD 630 / Aquamarine DRM modifier fix (prevents comb/sawtooth artifacts)
+export AQ_NO_MODIFIERS=1
+
+# Auto-start Hyprland on login from physical tty1
+if [[ -z "$WAYLAND_DISPLAY" ]] && [[ "$(tty)" == "/dev/tty1" ]]; then
+    exec Hyprland
+fi
+EOF
+fi
+
+# -----------------------------------------------------------------------------
 # COMPLETE
 # -----------------------------------------------------------------------------
 header "Installation Complete! 🎉"
 echo ""
-echo "Your desktop and curated software suite are installed and configured."
+echo "Your desktop, audio, and curated software suite are installed and configured."
+echo "Autologin is enabled: rebooting will bring you directly into your desktop."
+
 echo "To launch your session:"
 echo "  1. Launch Hyprland by running:"
 echo "       ${BOLD}Hyprland${RESET}"

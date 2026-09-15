@@ -225,12 +225,15 @@ Your mouse cursor will not jump or snap across windows when switching focus.
 | **Toggle Floating** | Hold `Super` + Middle-Click (or `Super + V`) |
 | **Switch Workspaces** | Hold `Super` + Mouse Scroll Wheel |
 
-### Interactive Status Bar (Waybar)
+### Interactive Status Bar (Waybar) & Start Menu
+- **` Start` Button:** Distinct blue pill button on the top-left that opens the mouse-friendly Rofi application launcher.
+- **Quick-Launch Dock:** Dedicated buttons next to the Start button for Terminal (`foot`), Web Browser, File Manager (`thunar`), and the Shortcuts Cheatsheet.
 - **Workspaces:** Click any number to jump to that workspace.
 - **Audio:** Scroll to increase/decrease volume. Left-click to mute. Right-click to open `pavucontrol` mixer.
 - **Network:** Click to open network connection manager (`nm-connection-editor`).
 - **Clock:** Displays formatted date/time with interactive calendar tooltip.
 - **Power:** Click power icon to lock screen or display power options.
+
 
 ---
 
@@ -299,18 +302,60 @@ The installer automatically detects Apple T2 hardware and configures the officia
 Server = https://mirror.funami.tech/arch-mact2/os/x86_64
 SigLevel = Never
 ```
-Then install `linux-t2`, `linux-t2-headers`, `apple-t2-audio-config`, `apple-bcm-firmware`, and `t2fand`:
+Then install `linux-t2`, `linux-t2-headers`, `apple-t2-audio-config`, `apple-bcm-firmware`, and `t2fanrd`:
 ```bash
-sudo pacman -Sy --needed linux-t2 linux-t2-headers apple-t2-audio-config apple-bcm-firmware t2fand
-sudo systemctl enable --now t2fand
+sudo pacman -Sy --needed linux-t2 linux-t2-headers apple-t2-audio-config apple-bcm-firmware t2fanrd
+sudo systemctl enable --now t2fanrd
 ```
 
-### High-DPI / 4K Displays
-If you are using a 4K display and the text/icons appear too small, open `~/.config/hypr/hyprland.conf` and adjust the monitor scaling line:
+### Intel UHD 630 Graphics Glitch Prevention (Sawtooth / Comb Artifacts)
+On the 2018 Mac mini (Coffee Lake Intel UHD 630), Wayland compositors can suffer from severe horizontal shearing and comb-like artifacts caused by Intel hardware Frame Buffer Compression (FBC) and Color Control Surface (CCS) buffer modifiers. 
+
+To permanently prevent this:
+1. **Disable i915 Frame Buffer Compression & PSR:**
+   Create `/etc/modprobe.d/i915.conf`:
+   ```ini
+   options i915 enable_fbc=0 enable_psr=0
+   ```
+   And append `i915.enable_fbc=0 i915.enable_psr=0` to the `options` line in `/boot/loader/entries/linux-t2.conf`, then run `sudo mkinitcpio -P`.
+2. **Disable DRM Modifiers in Wayland:**
+   Add to `/etc/environment` and `~/.bash_profile`:
+   ```bash
+   export AQ_NO_MODIFIERS=1
+   ```
+   And in `~/.config/hypr/hyprland.conf`:
+   ```ini
+   env = AQ_NO_MODIFIERS,1
+   cursor {
+       no_hardware_cursors = true
+   }
+   ```
+
+### Thunderbolt 3 & High-Resolution Ultrawide Displays
+- For high-resolution displays (such as the Dell U4021QW 5K2K 40" Ultrawide), connect directly via a **Thunderbolt 3 cable** to the Mac mini's USB-C ports (detected as `DP-1`).
+- Avoid connecting multiple display cables (e.g. HDMI and Thunderbolt simultaneously) to the same monitor, as Hyprland will treat them as two separate displays.
+- If text/icons appear too small, open `~/.config/hypr/hyprland.conf` and adjust the monitor scaling line:
 ```ini
-# Change scale factor (e.g. 1.5 or 2)
-monitor = , preferred, auto, 1.5
+# Native resolution with 1.5x or 1.6x HiDPI scaling
+monitor = DP-1, preferred, auto, 1.5
 ```
+
+### Automatic Login & Direct Desktop Startup
+To boot directly into Hyprland without typing your username, password, or `Hyprland` command:
+1. **Autologin on tty1:** Create `/etc/systemd/system/getty@tty1.service.d/autologin.conf`:
+   ```ini
+   [Service]
+   ExecStart=
+   ExecStart=-/sbin/agetty -o '-p -f -- \\u' --noclear --autologin yourusername %I $TERM
+   ```
+   Then reload systemd: `sudo systemctl daemon-reload`.
+2. **Auto-launch Hyprland:** Add to `~/.bash_profile`:
+   ```bash
+   export AQ_NO_MODIFIERS=1
+   if [[ -z "$WAYLAND_DISPLAY" ]] && [[ "$(tty)" == "/dev/tty1" ]]; then
+       exec Hyprland
+   fi
+   ```
 
 ### Reloading Hyprland
 Whenever you edit `~/.config/hypr/hyprland.conf`, Hyprland reloads automatically. If needed, force a reload and check for syntax errors:
@@ -318,3 +363,4 @@ Whenever you edit `~/.config/hypr/hyprland.conf`, Hyprland reloads automatically
 hyprctl reload
 hyprctl configerrors
 ```
+
