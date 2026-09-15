@@ -361,6 +361,7 @@ class Window(Gtk.ApplicationWindow):
             ("Network", "Edit wired and Wi-Fi connections.", ["nm-connection-editor"]),
             ("Connect to Wi-Fi", "Choose a network using the interactive network manager.", ["foot", "-T", "Network Setup", "-e", "nmtui"]),
             ("Bluetooth", "Pair headphones, keyboards, mice and other devices.", ["blueman-manager"]),
+            ("Screen sharing", "Connect from your MacBook, view the VNC password, or turn sharing on and off.", ["python", str(HERE / "sharing.py")]),
         ):
             page.pack_start(label(title, "section"), False, False, 0)
             page.pack_start(label(description, "muted"), False, False, 0)

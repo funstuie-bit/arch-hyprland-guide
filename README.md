@@ -184,6 +184,8 @@ rg -n '/home/stu' dotfiles
 
 ## 4. Keyboard and mouse controls
 
+**MacBook screen sharing:** connect from Finder → Go → Connect to Server (Command+K) to **`vnc://192.168.1.66`**. Find/change the separate VNC password or disable sharing under **Settings → Sound & connections → Screen sharing**. Direct LAN VNC is unencrypted, as chosen for this home network; never forward port 5900. See [setup, security, and troubleshooting](docs/screen-sharing.md).
+
 `Super` is the Command key on an Apple keyboard, or the Windows key on a typical PC keyboard.
 
 **Updated September 15:** core window controls were compared with Omarchy's actual defaults and corrected. Read the [window-controls guide and compatibility audit](docs/window-controls.md) for all mappings and intentional differences.
@@ -335,7 +337,7 @@ These two files under `/usr/share/alsa/ucm2/` are local additions, currently not
 
 ### Volume indicator
 
-[volume.sh](dotfiles/hypr/bin/volume.sh) changes the default output in 5% steps, retaining the existing 150% ceiling. Mako shows a bottom-center bar and percentage or mute status for 1.5 seconds. Repeated presses replace the popup; it does not enter notification history.
+[volume.sh](dotfiles/hypr/bin/volume.sh) changes the default output in **1% steps**, retaining the existing 150% ceiling. Mako shows a bottom-center bar and percentage or mute status for 1.5 seconds. Repeated presses replace the popup; it does not enter notification history. Waybar's mouse-wheel volume step remains separate.
 
 The visual bar fills at 100%; the text still reports levels above 100%. The installer deploys the helper, bindings, and Mako styling together. To preview without changing volume:
 

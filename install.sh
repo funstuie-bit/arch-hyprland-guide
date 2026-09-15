@@ -346,10 +346,14 @@ fi
 
 # Install the local Settings app and its launcher.
 mkdir -p "${HOME}/.local/share/desktop-settings/app/wallpapers" "${HOME}/.local/bin"
-install -m644 "${SCRIPT_DIR}/settings/app.py" "${SCRIPT_DIR}/settings/backend.py" "${HOME}/.local/share/desktop-settings/app/"
+install -m644 "${SCRIPT_DIR}/settings/app.py" "${SCRIPT_DIR}/settings/backend.py" "${SCRIPT_DIR}/settings/sharing.py" "${HOME}/.local/share/desktop-settings/app/"
 install -m644 "${SCRIPT_DIR}/settings/wallpapers/"*.svg "${HOME}/.local/share/desktop-settings/app/wallpapers/"
 install -m755 "${SCRIPT_DIR}/settings/desktop-settings" "${HOME}/.local/bin/desktop-settings"
 install -m644 "${DOTFILES_SOURCE}/applications/desktop-settings.desktop" "${HOME}/.local/share/applications/desktop-settings.desktop"
+
+# Optional unit only: do not create VNC credentials or enable remote access.
+mkdir -p "${HOME}/.config/systemd/user"
+install -m644 "${DOTFILES_SOURCE}/systemd/user/wayvnc.service" "${HOME}/.config/systemd/user/wayvnc.service"
 
 # Set default agent if none configured
 if [[ ! -f "${CONFIG_DIR}/default-agent" ]]; then

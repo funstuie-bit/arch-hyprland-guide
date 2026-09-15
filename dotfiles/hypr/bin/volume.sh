@@ -7,8 +7,8 @@ export LC_ALL=C
 exec 9>"${XDG_RUNTIME_DIR:?}/desktop-volume.lock"
 flock 9
 case "${1:-show}" in
-    up)   wpctl set-volume -l 1.5 @DEFAULT_AUDIO_SINK@ 5%+ ;;
-    down) wpctl set-volume @DEFAULT_AUDIO_SINK@ 5%- ;;
+    up)   wpctl set-volume -l 1.5 @DEFAULT_AUDIO_SINK@ 1%+ ;;
+    down) wpctl set-volume @DEFAULT_AUDIO_SINK@ 1%- ;;
     mute) wpctl set-mute @DEFAULT_AUDIO_SINK@ toggle ;;
     show) ;;
     *) printf 'Usage: %s {up|down|mute|show}\n' "$0" >&2; exit 2 ;;

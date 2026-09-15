@@ -8,6 +8,15 @@
 
 ## 1. System Vision & User Design Requirements
 
+### Screen sharing and 1% keyboard volume (September 15, 2026)
+
+- User chose direct home-LAN Apple Screen Sharing instead of encrypted SSH tunnelling. Installed wayvnc 0.10.1, neatvnc 1.0.1 and aml 1.0.0 from pacman. Password-authenticated listener binds 192.168.1.66:5900. No router, firewall, or SSH changes. Legacy Apple-compatible mode is unencrypted; user accepted this explicitly.
+- Unique eight-character VNC password is in private `~/.config/wayvnc/config` (0600, directory 0700), NOT in this repo. User can view/change it in Settings → Sound & connections → Screen sharing. Panel also enables/disables the service and login startup, and selects another available private address. User requested closing the initial panel; it was closed and given a visible GTK title-bar close button. Do not reopen it unprompted.
+- Enabled `wayvnc.service`, capturing DP-1 with client resizing disabled at maximum 30fps. Startup helper imports the live Wayland environment and starts only an enabled unit. Fresh desktop installs deploy the optional unit/panel but do not install WayVNC, create a password, or enable remote access.
+- Local `tests/vnc_smoke.py --live` passed password rejection/acceptance, 5120×2160 desktop size, and live pixel capture. No input was injected. MacBook connection/input, remote unlock, sleep, and headless behaviour remain unconfirmed. Details: docs/screen-sharing.md. Address is DHCP; a router reservation may be useful.
+- Backup: `/home/stu/screen-sharing-backup.SBA6EX/hyprland.conf`. Existing resolution, theme, audio output, and applications were preserved.
+- Separate request: keyboard volume increments changed from 5% to 1% in live and repository volume.sh; verified 15% → 14% → 15% with the OSD retained. Waybar mouse-wheel increment remains 5%.
+
 ### CodexBar Linux installed (September 15, 2026)
 
 - User requested the official Linux CodexBar app in the same bar as networking. Installed stable v0.60.3 CLI and desktop from the upstream release, verifying both published SHA-256 files before extraction. Existing Qt6 dependencies satisfied requirements; no system packages changed.
