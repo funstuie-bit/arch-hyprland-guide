@@ -18,8 +18,22 @@ Reviewed against the repository and running machine on **September 14, 2026**. T
 | Volume keys | Bottom-center volume/mute popup using Mako |
 | Window controls | Super+T swaps a tiled split; Super+W closes the focused window |
 | Help | Super+K opens the searchable shortcut list |
+| Settings | Super+, or the top-bar gear opens graphical desktop settings |
 
-The current configuration uses dark Catppuccin-style colors. A broader visual redesign remains outstanding.
+The default configuration uses dark Catppuccin-style colors. Settings now provides four coordinated themes, an accent-color picker, and wallpaper controls; choosing a theme is optional.
+
+### Change the desktop without editing configuration files
+
+Open **Settings** using **Super+,** (Command+comma on an Apple keyboard), the **gear in the top bar**, or by searching for **Settings** in the application launcher (Super+Space).
+
+- **Appearance:** choose Midnight, Northern sky, Forest, or Warm paper, optionally pick an accent color, then click Apply theme. This updates window borders, the bar, launcher, notifications, and colors in newly opened Foot terminals. Other applications may have their own theme settings.
+- **Wallpaper:** choose one of the three included backgrounds or browse for your own image, choose how it fits, then apply. It applies to all connected monitors; a managed copy is kept so moving the original image does not break it.
+- **Undo last appearance change:** restores the previous theme or wallpaper change, including across app restarts. This is one-step undo, not a history. It refuses to overwrite configuration files edited elsewhere since that change.
+- **Display:** choose a monitor, an advertised resolution/refresh rate, and scaling. Preview changes before keeping them. The dialog reverts after 20 seconds; an independent 25-second recovery timer also runs if the app closes or crashes. Only Keep saves the setting. The existing 5120×2160 at 30 Hz, 100% configuration is unchanged until you choose otherwise.
+- **Sound & connections:** open the installed sound, network, Wi-Fi, and Bluetooth controls.
+- **Shortcuts & help:** see common shortcuts and open the searchable cheatsheet or this guide.
+
+Settings runs as your regular user and needs no administrator password for appearance changes. It is a small app maintained in this repository, not a complete desktop-environment control center. Lock-screen styling and application-specific preferences are not managed here.
 
 ## 2. Install the base system
 
@@ -112,6 +126,7 @@ Run as the regular desktop user, **not** as root or with `sudo ./install.sh`. Th
 - Enables NetworkManager, systemd-resolved, Bluetooth, and attempts to enable Ollama. Disables networkd's service and disables automatic connection on existing profiles identified as the internal T2 device.
 - Moves existing `hypr`, `waybar`, `rofi`, `foot`, and `mako` configuration directories to `~/.config_backup_TIMESTAMP/`, then copies repository versions into `~/.config/`.
 - Installs the Cliamp desktop entry, makes helper scripts executable, and creates `~/Pictures/Screenshots/`.
+- Installs the graphical Settings app, its launcher entry, and three original wallpapers, with Python/GTK dependencies.
 - Adds eza/bat aliases and zoxide initialization to the shell configuration. Installing fzf does not itself mean its shell keybindings have been enabled.
 - On detected T2 hardware, configures the community `arch-mact2` repository if missing and installs the T2 kernel, audio configuration, firmware, and fan daemon. Adds the missing Mac mini audio profile when applicable.
 - Writes this setup's Intel graphics workarounds, rebuilds initramfs, and may modify bootloader configuration.
@@ -186,6 +201,7 @@ Closing a window is not necessarily quitting every window or background process 
 | Shortcut | Action |
 | --- | --- |
 | Super+K or Alt+K | Searchable shortcut cheatsheet |
+| Super+, | Graphical Settings: appearance, wallpaper, display, and device controls |
 | Super+Space or Alt+Space | Rofi application launcher |
 | Super+Return | Foot terminal |
 | Super+B or Super+Shift+Return | Browser launch command |

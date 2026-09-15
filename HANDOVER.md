@@ -8,6 +8,21 @@
 
 ## 1. System Vision & User Design Requirements
 
+### Graphical Settings added (September 14, 2026)
+
+This update supersedes the earlier outstanding coordinated-appearance work. A Python/GTK3 Settings app is deployed and integrated into the installer. Open via Super+comma, the Waybar gear, or the Settings launcher entry. It floats centered without changing the user's display or audio preferences.
+
+- Source: `settings/app.py`, `settings/backend.py`, `settings/wallpapers/`, and `settings/test_settings.py`. Launcher source: `dotfiles/applications/desktop-settings.desktop`.
+- Installed app: `~/.local/share/desktop-settings/app/`; wrapper: `~/.local/bin/desktop-settings`. Dependencies: Python, python-gobject, gtk3, librsvg (plus existing desktop tools).
+- Four coordinated palettes and custom accent colors update Hyprland, Waybar, Rofi, Foot, and Mako. Foot colors apply to newly opened terminals. Application-specific themes and lock-screen styling remain separate.
+- Wallpaper chooser copies decoded images into `~/.local/share/desktop-settings/wallpapers/` and configures hyprpaper for all monitors.
+- State: `~/.config/desktop-settings/state.json`. One-step persistent Undo journal: `~/.local/state/desktop-settings/undo.json`. Writes are atomic; reload failures roll back; Undo checks hashes before overwriting files. Theme edits preserve bindings and monitor rules. Local selections are not automatically committed to GitHub.
+- Display previews use a 20-second confirmation dialog plus an independent systemd user timer at 25 seconds. Keep writes only the selected monitor's rule; cancel/timeout restores its previous live mode. The timer was tested after its launching process exited, using the current mode to avoid disrupting the desktop.
+- Devices page opens existing sound/network/Bluetooth tools; Help includes shortcuts. `desktop-settings --page appearance|wallpaper|display|devices|help` opens a particular page.
+- Validation: 12 automated backend tests; live apply/undo for all four themes with Hyprland, Foot, Rofi, and Waybar CSS validation; live wallpaper apply/undo; desktop-entry validation and launch; independent display recovery timer succeeded. A different physical display mode and a fresh OS installation were not tested.
+- The accepted native display setting, headphone output, and existing appearance were restored after testing. The user can choose their preferred theme and wallpaper in Settings.
+- For updates, deploy the app sources and assets separately; do not rerun the full installer to update Settings. Installer dotfile deployment can overwrite locally selected appearance (with the documented directory backups).
+
 ### Latest repair status (September 14, 2026, evening)
 
 This section supersedes conflicting historical notes below.

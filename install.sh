@@ -108,6 +108,10 @@ CORE_PACKAGES=(
     git
     curl
     jq
+    python
+    python-gobject
+    gtk3
+    librsvg
     mesa
     vulkan-intel
     intel-media-driver
@@ -339,6 +343,13 @@ if [[ -f "${DOTFILES_SOURCE}/applications/cliamp.desktop" ]]; then
     cp "${DOTFILES_SOURCE}/applications/cliamp.desktop" "${HOME}/.local/share/applications/"
     log "  Installed Cliamp desktop entry"
 fi
+
+# Install the local Settings app and its launcher.
+mkdir -p "${HOME}/.local/share/desktop-settings/app/wallpapers" "${HOME}/.local/bin"
+install -m644 "${SCRIPT_DIR}/settings/app.py" "${SCRIPT_DIR}/settings/backend.py" "${HOME}/.local/share/desktop-settings/app/"
+install -m644 "${SCRIPT_DIR}/settings/wallpapers/"*.svg "${HOME}/.local/share/desktop-settings/app/wallpapers/"
+install -m755 "${SCRIPT_DIR}/settings/desktop-settings" "${HOME}/.local/bin/desktop-settings"
+install -m644 "${DOTFILES_SOURCE}/applications/desktop-settings.desktop" "${HOME}/.local/share/applications/desktop-settings.desktop"
 
 # Set default agent if none configured
 if [[ ! -f "${CONFIG_DIR}/default-agent" ]]; then

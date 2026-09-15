@@ -1,0 +1,10 @@
+[Desktop Entry]
+Type=Application
+Name=Settings
+Comment=Themes, wallpaper, display, sound and connections
+Exec=sh -c "exec \\"\\$HOME/.local/bin/desktop-settings\\""
+Icon=preferences-system
+Terminal=false
+Categories=Settings;DesktopSettings;
+Keywords=theme;colors;wallpaper;display;audio;network;bluetooth;
+StartupWMClass=org.archdesktop.Settings

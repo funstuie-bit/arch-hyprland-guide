@@ -5,6 +5,7 @@
 # ##############################################################################
 
 SHORTCUTS=(
+    "⚙ SETTINGS	Super + ,	Themes, wallpaper, display, sound and connections"
     "📋 CLIPBOARD	Super + C	Universal Copy (Cmd + C)"
     "📋 CLIPBOARD	Super + V	Universal Paste (Cmd + V - no Ctrl+Shift+V needed!)"
     "📋 CLIPBOARD	Super + X	Universal Cut (Cmd + X)"

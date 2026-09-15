@@ -22,6 +22,7 @@
         "network",
         "custom/clipboard",
         "custom/shortcuts",
+        "custom/settings",
         "tray",
         "custom/power"
     ],
@@ -110,6 +111,12 @@
     "tray": {
         "icon-size": 15,
         "spacing": 8
+    },
+
+    "custom/settings": {
+        "format": "⚙",
+        "tooltip-format": "Settings — themes, wallpaper, display, sound and connections (Super + ,)",
+        "on-click": "$HOME/.local/bin/desktop-settings"
     },
 
     "custom/power": {
