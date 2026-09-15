@@ -200,9 +200,28 @@ for pkg in "${APP_PACKAGES[@]}"; do
 done
 
 # -----------------------------------------------------------------------------
-# 2. SYSTEM SERVICES
+# 2. SYSTEM SERVICES & NETWORKING
 # -----------------------------------------------------------------------------
-header "2. Enabling Essential Services"
+header "2. Enabling Essential Services & Networking"
+
+log "Configuring NetworkManager and disabling conflicting network daemons..."
+# If systemd-networkd was used during initial bootstrap, disable it to prevent dual DHCP collisions
+sudo systemctl disable --now systemd-networkd 2>/dev/null || true
+
+# Prevent NetworkManager from re-enabling IPv6 on connection activation if local ISP/router has broken IPv6 routes
+sudo mkdir -p /etc/NetworkManager/conf.d
+sudo tee /etc/NetworkManager/conf.d/disable-ipv6.conf >/dev/null <<'EOF'
+[connection]
+ipv6.method=disabled
+EOF
+
+# Ensure systemd-resolved stub symlink is correct for musl/glibc binaries (e.g. Codex CLI)
+sudo ln -sf /run/systemd/resolve/stub-resolv.conf /etc/resolv.conf 2>/dev/null || true
+
+# Prioritize IPv4 in glibc gai.conf
+if [[ -f /etc/gai.conf ]]; then
+    sudo sed -i 's/^#precedence ::ffff:0:0\/96  100/precedence ::ffff:0:0\/96  100/' /etc/gai.conf 2>/dev/null || true
+fi
 
 log "Enabling NetworkManager..."
 sudo systemctl enable --now NetworkManager 2>/dev/null || true

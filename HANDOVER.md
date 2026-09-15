@@ -230,4 +230,70 @@ All shortcuts use standard Mac muscle memory (`Super` = Command key `⌘`):
 | **Power Menu** | `~/.config/hypr/bin/system-menu.sh` | `dotfiles/hypr/bin/system-menu.sh` | Shutdown, Reboot, Lock, Logout dialog |
 | **Startup Shell**| `~/.bash_profile` | *(host local)* | Auto-starts Hyprland via `start-hyprland` on `tty1` |
 | **Intel Modprobe**| `/etc/modprobe.d/i915.conf` | *(system level)* | Disables FBC and PSR for UHD 630 stability |
-| **Kernel Cmdline**| `/boot/loader/entries/linux-t2.conf` | *(system level)* | Adds `i915.enable_fbc=0 i915.enable_psr=0` |
+| **Kernel Cmdline**| `/boot/loader/entries/linux-t2.conf` | *(system level)* | Adds `i915.enable_fbc=0 i915.enable_psr=0 ipv6.disable=1` |
+| **NetworkManager**| `/etc/NetworkManager/conf.d/disable-ipv6.conf` | *(system level)* | Disables IPv6 profile auto-activation |
+| **DNS Resolver**  | `/etc/resolv.conf` | *(system level)* | Symlink to `/run/systemd/resolve/stub-resolv.conf` |
+
+---
+
+## 7. AI Agents & Network Troubleshooting: Codex CLI & Musl DNS Resolution
+
+### The Problem
+Codex CLI (`codex`) suddenly failed to connect to OpenAI (`auth.openai.com` / `chatgpt.com`), throwing:
+```
+ERROR rmcp::transport::worker: worker quit with fatal: Transport channel closed, when Client(HttpRequest(HttpRequest("http/request failed: error sending request for url (https://chatgpt.com/backend-api/ps/mcp)")))
+```
+and:
+```
+failed to lookup address information: Try again, url: wss://chatgpt.com/backend-api/codex/responses
+```
+while `curl` or browser appeared to work or fall back. Hardcoding IPs in `/etc/hosts` or setting `sysctl net.ipv6.conf.all.disable_ipv6=1` only worked temporarily and broke again on DHCP lease renewals.
+
+### Root Cause Analysis
+1. **Musl Libc vs Glibc DNS Resolution:**
+   - Codex CLI is distributed as a static Linux binary compiled with **musl libc** (`x86_64-unknown-linux-musl`).
+   - Glibc uses Name Service Switch (`/etc/nsswitch.conf`) with `nss-resolve` or D-Bus IPC to resolve DNS through `systemd-resolved` even if `/etc/resolv.conf` is broken.
+   - **Musl libc bypasses NSS entirely.** It strictly reads `/etc/resolv.conf` and issues standard UDP/TCP DNS queries directly to the listed nameservers.
+   - `/etc/resolv.conf` on the machine was a broken symlink:
+     `lrwxrwxrwx 1 root root /etc/resolv.conf -> /run/systemd/resolve/stub-resolve.conf`
+     Notice the typo: `stub-resolve.conf` instead of `stub-resolv.conf`.
+   - Because the target file did not exist, musl libc found zero nameservers and immediately returned `EAI_AGAIN` (`failed to lookup address information: Try again`).
+
+2. **NetworkManager Dynamically Re-Enabling IPv6:**
+   - The local network's router advertises IPv6 Unique Local Addresses (`fd8e:...`) without a functional IPv6 WAN gateway.
+   - Setting `net.ipv6.conf.all.disable_ipv6 = 1` via sysctl was overridden every time NetworkManager activated or renewed the connection, because the connection profile had `ipv6.method: auto`. NetworkManager explicitly reset `net.ipv6.conf.enp1s0.disable_ipv6 = 0`.
+   - Applications attempting IPv6 first would stall or fail on unreachable IPv6 endpoints before falling back.
+
+3. **Dual Network Daemons Conflict:**
+   - Both `systemd-networkd` and `NetworkManager` were running simultaneously, requesting competing DHCP leases (`192.168.1.65` and `192.168.1.66`).
+
+### Permanent Resolution Applied
+1. **Corrected `/etc/resolv.conf` Symlink:**
+   ```bash
+   sudo ln -sf /run/systemd/resolve/stub-resolv.conf /etc/resolv.conf
+   ```
+   Verified `resolvectl status` shows `resolv.conf mode: stub` with `127.0.0.53`.
+
+2. **Permanent NetworkManager IPv6 Override:**
+   Created `/etc/NetworkManager/conf.d/disable-ipv6.conf`:
+   ```ini
+   [connection]
+   ipv6.method=disabled
+   ```
+   Modified active connection: `sudo nmcli connection modify "Wired connection 1" ipv6.method disabled`.
+
+3. **Kernel Command Line Hardening:**
+   Added `ipv6.disable=1` to `/boot/loader/entries/linux-t2.conf` so the Linux kernel completely disables the IPv6 stack on boot.
+
+4. **Glibc IPv4 Precedence:**
+   Configured `/etc/gai.conf` with `precedence ::ffff:0:0/96 100` so standard glibc utilities prioritize IPv4.
+
+5. **Eliminated Network Daemon Conflict:**
+   Disabled `systemd-networkd`: `sudo systemctl disable --now systemd-networkd`.
+
+### Verification
+- `codex doctor --summary`:
+  ```
+  19 ok · 1 idle · 0 warn · 0 fail ok
+  ```
+- `codex exec`: Prompt execution succeeds and streams responses cleanly in ~7 seconds without transport errors.
