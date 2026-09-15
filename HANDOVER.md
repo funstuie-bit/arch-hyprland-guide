@@ -8,6 +8,15 @@
 
 ## 1. System Vision & User Design Requirements
 
+### Mouse tiling and tab usability follow-up (September 15, 2026)
+
+- User confirmed VNC works, but reported that arranging/resizing windows was still unusable on BOTH local hardware and MacBook. Live state again showed four full-height dwindle tiles with no groups; the earlier two-pair arrangement was no longer present. Do not claim VNC alone caused the problem.
+- Enabled `dwindle:precise_mouse_move=true` (previously false). This stock Hyprland feature lets Super/Alt left-drag drop a tile above/below/beside another tile according to pointer position. Retained preserved splits and existing keyboard defaults; did not enable global cursor-based smart_split for all new windows.
+- Added a visible `▦ Layout` Waybar button next to workspaces. Its Rofi menu now includes split orientation, create/join tabs in each direction, next/previous tab, and ungroup. It remembers and restores the intended window after the menu closes. Super+Alt+Arrows now use `moveintoorcreategroup`, eliminating the previously required pre-existing target group.
+- `tests/tiling_input_live.py --live` successfully sent real VNC Super+J, left-drag/top-drop, and right-drag events to temporary windows. Verified top/bottom tiles and actual HEIGHT change, plus group creation/tab switching through compositor actions. This is stronger than the earlier dispatcher-only test, but still requires the user's physical-client confirmation. It restores cursor/focus/workspace and closes only test windows.
+- Re-arranged the current four user windows as two balanced top/bottom pairs, keeping all apps open. This is session state, not a fixed rule or a persistent layout preset.
+- Backup: `/home/stu/tiling-repair-backup.s6Ngro/` contains live Hyprland and Waybar configuration. README and window-controls guide updated. Settings theme generator includes the new layout button.
+
 ### Screen sharing and 1% keyboard volume (September 15, 2026)
 
 - User chose direct home-LAN Apple Screen Sharing instead of encrypted SSH tunnelling. Installed wayvnc 0.10.1, neatvnc 1.0.1 and aml 1.0.0 from pacman. Password-authenticated listener binds 192.168.1.66:5900. No router, firewall, or SSH changes. Legacy Apple-compatible mode is unencrypted; user accepted this explicitly.

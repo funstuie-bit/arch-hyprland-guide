@@ -192,6 +192,8 @@ rg -n '/home/stu' dotfiles
 
 **Stuck with full-height columns?** Focus a tile and press **Super+J** to turn its pair into a top/bottom split. **Super+T** makes a window float so you can move/resize it independently with **Super+left/right-drag**. **Super+Minus/Equal** resizes width; add **Shift** for height. Tiled resizing adjusts shared dividers, so a full-height tile cannot independently shrink vertically without changing its split or floating it.
 
+**Mouse tiling and tabs:** click **▦ Layout** next to the workspace buttons for split/group controls. Hold **Super or Alt + left-drag** on a tiled window and release near the **top, bottom, left, or right of another tile** to place it there. Precise drop placement is enabled; dragging is not limited to swapping columns. Then resize the shared horizontal/vertical divider with right-drag or by grabbing the border. To tab two neighbouring windows, select **Tab with window…** in Layout, or use **Super+Alt+Arrow**; a group is created automatically if needed. Click the resulting tab headers to switch, or choose **Remove focused window from tabs** to split one out.
+
 **Super+Alt+Space** opens a desktop-controls menu. **Super+L** switches the current workspace between dwindle and scrolling layouts; it no longer acts as the browser address bar (use **Ctrl+L**).
 
 ### Windows, tabs, and workspaces

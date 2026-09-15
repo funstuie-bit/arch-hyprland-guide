@@ -6,6 +6,10 @@ The previous configuration did **not** reproduce that workflow: Super+T swapped 
 
 ## Start here: get out of full-height columns
 
+**Mouse-first controls (September 15 follow-up):** **▦ Layout** is now beside the workspace buttons, with split and tab-group actions. Hold Super or Alt and **left-drag a tile onto the top/bottom/left/right region of another tile**. Release near the middle of the desired edge, not a corner. `dwindle:precise_mouse_move=true` makes the drop location determine the split. This is an intentional usability addition to the researched upstream defaults, not an Omarchy dependency. Right-drag resizes the dividers after placement; resizing a full-height column alone cannot create a new row.
+
+The group actions and **Super+Alt+Arrow** now **create or join** a group with the neighbouring window, so there is no hidden requirement to create a target group first. Click tab headers to switch tabs. The menu includes next/previous tab and removing the focused tab back into tiling.
+
 `Super` means the Command key on an Apple keyboard.
 
 1. Focus one of two neighbouring tiles and press **Super+J**. Their split changes between side-by-side and top/bottom. It changes that pair/subtree, not every window at once; repeat on another pair if you want two stacks.
@@ -47,7 +51,7 @@ If a launcher, power menu, or cheatsheet is open, press Escape before using wind
 | Super+Shift+Alt+Arrow | Move workspace to directional monitor |
 | Super+S / Super+Alt+S | Show scratchpad / send window there without following |
 | Super+G / Super+Alt+G | Toggle group / remove window from group |
-| Super+Alt+Arrow | Move window into adjacent group |
+| Super+Alt+Arrow | Create/join tabs with adjacent window |
 | Super+Alt+Tab / Super+Alt+Shift+Tab | Next / previous grouped window |
 | Super+Ctrl+Left/Right | Previous / next grouped window |
 | Super+Alt+1…5 | Select numbered window within group |
@@ -99,5 +103,7 @@ An optional live test creates disposable Foot windows on an unused workspace, re
 ```bash
 python tests/window_controls_live.py --live
 ```
+
+With the local WayVNC service configured, `python tests/tiling_input_live.py --live` additionally sends actual VNC keyboard and pointer events to disposable windows: Super+J, drag-to-top tiling, and right-drag vertical resizing. It also tests grouping/tab switching through compositor actions. This passed on this machine; it does not prove how the MacBook client maps its physical keys. Do not interact with the desktop during the test. It restores the previous workspace/focus/cursor and closes only its own test windows. Its drag coordinates assume this machine's 5120×2160, scale-1 display.
 
 Before the September 15 change, the live Hyprland directory was backed up to `/home/stu/window-controls-backup.WFHQQl/hypr`; the Settings UI source was also backed up alongside it. Restoring that backup would also restore the incorrect Super+T binding. A later local theme selection should be preserved when making selective config repairs.

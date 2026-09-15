@@ -10,6 +10,7 @@
     "modules-left": [
         "custom/menu",
         "hyprland/workspaces",
+        "custom/layout",
         "hyprland/window"
     ],
     "modules-center": [
@@ -32,6 +33,12 @@
         "tooltip-format": "App Launcher\nLeft-click: Application Launcher (Super + Space)\nRight-click: Foot Terminal (Super + Return)",
         "on-click": "rofi -show drun -show-icons",
         "on-click-right": "foot"
+    },
+
+    "custom/layout": {
+        "format": "▦ Layout",
+        "tooltip-format": "Window layout and tabs\nClick: split, tile, group and resize controls\nDrag a tile: hold Super or Alt + left mouse, drop near the TOP/BOTTOM/LEFT/RIGHT of another tile",
+        "on-click": "$HOME/.config/hypr/bin/window-controls.sh menu"
     },
 
     "hyprland/workspaces": {

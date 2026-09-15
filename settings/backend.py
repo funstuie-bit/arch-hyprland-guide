@@ -90,7 +90,7 @@ group {{
         col.inactive = rgba({c['bg']}ff)
     }}
 }}"""
-    modules = "#custom-menu, #custom-settings, #workspaces, #window, #clock, #pulseaudio, #cpu, #memory, #network, #custom-clipboard, #custom-shortcuts, #tray, #custom-power"
+    modules = "#custom-menu, #custom-settings, #custom-layout, #workspaces, #window, #clock, #pulseaudio, #cpu, #memory, #network, #custom-clipboard, #custom-shortcuts, #tray, #custom-power"
     css = f"""window#waybar {{ color: #{c['fg']}; }}
 {modules} {{ background: #{c['bg']}; color: #{c['fg']}; border-color: #{c['surface']}; }}
 #workspaces button {{ color: #{c['muted']}; }}

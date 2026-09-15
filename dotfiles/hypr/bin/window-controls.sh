@@ -42,15 +42,38 @@ case "${1:-menu}" in
         fi
         ;;
     menu)
+        # Keep the intended window even though Rofi temporarily takes focus.
+        target=$(hyprctl -j activewindow | jq -r '.address // empty')
+        if [[ -z "$target" ]]; then
+            target=$(hyprctl -j activeworkspace | jq -r '.lastwindow // empty')
+        fi
         choice=$(printf '%s\n' \
-            'Float / tile focused window (Super+T)' \
             'Split side-by-side / top-bottom (Super+J)' \
+            'Tab with window on the left' \
+            'Tab with window on the right' \
+            'Tab with window above' \
+            'Tab with window below' \
+            'Remove focused window from tabs' \
+            'Next tab in group' \
+            'Previous tab in group' \
+            'Float / tile focused window (Super+T)' \
             'Switch dwindle / scrolling layout (Super+L)' \
             'Maximize with application tabs (Super+Alt+F)' \
             'Pin / unpin floating window (Super+O)' \
             'Settings' 'Theme' 'Wallpaper' 'Display' 'Sound' 'Bluetooth' \
-            'Keyboard shortcuts' 'Power menu' | rofi -dmenu -i -p 'Desktop controls') || exit 0
+            'Keyboard shortcuts' 'Power menu' | rofi -dmenu -i -p 'Window layout and desktop' \
+                -theme-str 'window { width: 850px; } listview { lines: 14; }') || exit 0
+        if [[ -n "$target" && "$target" != 0x0 ]]; then
+            dispatch focuswindow "address:$target"
+        fi
         case "$choice" in
+            'Tab with window on the left') dispatch moveintoorcreategroup l ;;
+            'Tab with window on the right') dispatch moveintoorcreategroup r ;;
+            'Tab with window above') dispatch moveintoorcreategroup u ;;
+            'Tab with window below') dispatch moveintoorcreategroup d ;;
+            'Remove focused window from tabs') dispatch moveoutofgroup ;;
+            'Next tab in group') dispatch changegroupactive f ;;
+            'Previous tab in group') dispatch changegroupactive b ;;
             Float*) dispatch togglefloating ;;
             Split*) dispatch layoutmsg togglesplit ;;
             Switch*) exec "$0" layout ;;

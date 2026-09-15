@@ -42,6 +42,7 @@ window#waybar {
 #custom-clipboard,
 #custom-shortcuts,
 #custom-settings,
+#custom-layout,
 #tray,
 #custom-power {
     background: rgba(30, 30, 46, 0.88);
@@ -62,6 +63,7 @@ window#waybar {
 #custom-clipboard:hover,
 #custom-shortcuts:hover,
 #custom-settings:hover,
+#custom-layout:hover,
 #custom-power:hover {
     background: rgba(49, 50, 68, 0.95);
     border-color: rgba(203, 166, 247, 0.35);
