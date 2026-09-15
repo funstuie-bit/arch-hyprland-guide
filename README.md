@@ -1,352 +1,277 @@
-# Clean Arch Linux + Hyprland on 2018 Mac mini
+# Arch Linux + Hyprland on a 2018 Mac mini
 
-## Current desktop corrections — September 14, 2026
+A personal Arch desktop configuration for a **Macmini8,1 with Apple T2 and Intel UHD 630 graphics**, using Hyprland, Waybar, Rofi, Foot, Mako, and PipeWire.
 
-- Dell DP-1: 5120×2160 at 30 Hz, 100% scaling, explicitly selected by the user.
-- Super+T swaps the two halves of the focused tiled split; Super+W closes the focused window; Super+K shows the updated cheatsheet. Ctrl+T / Ctrl+W remain application tab shortcuts.
-- The Apple T2 internal USB network interface is not an internet uplink. Its NetworkManager profile must not auto-connect with DHCP. The bootstrap script now skips it.
-- NetworkManager ignores global `[connection] ipv6.method=disabled`. The live machine retains IPv6 disabled in its Ethernet profile and kernel command line; the invalid global file has been retired.
-- Core package, T2 package, and initramfs failures stop the installer. Do not rerun the installer merely to update desktop shortcuts: it performs system-wide changes.
+This repository contains a **post-install setup script**, desktop configuration, and a network recovery script. It does not partition disks or install the base operating system. It does not install Omarchy.
 
-The installation history below includes older manual recovery commands. Prefer the guarded bootstrap script for recovery; never start networkd alongside an active NetworkManager.
+Reviewed against the repository and running machine on **September 14, 2026**. The desktop repairs below have been checked on this Mac; a complete fresh installation using the revised scripts has **not** been tested end to end. [HANDOVER.md](HANDOVER.md) records the repair history; its older sections include superseded instructions.
 
-A lightweight, transparent, and independently configured Arch Linux + Hyprland desktop designed for the **2018 Intel Mac mini (T2 / Intel UHD 630)**.
+## 1. Current desktop
 
-This setup extracts the best productivity innovations of custom Arch setups into a **clean, modular "Lite" build**—without DHH's monolithic Lua layer, forced branding, proprietary update mechanisms, or opinionated bloat.
+| Component | Current configuration |
+| --- | --- |
+| System | Arch Linux, T2 kernel, Hyprland 0.56.2 |
+| Display | Dell U4021QW on DP-1, 5120×2160 at 30 Hz, 100% scaling |
+| Networking | NetworkManager with systemd-resolved; wired internet on enp1s0 |
+| Internal T2 network interface | Automatic DHCP disabled on its existing NetworkManager profile |
+| Audio | Stereo external speakers through the 3.5 mm jack; user confirmed working |
+| Volume keys | Bottom-center volume/mute popup using Mako |
+| Window controls | Super+T swaps a tiled split; Super+W closes the focused window |
+| Help | Super+K opens the searchable shortcut list |
 
-### Key Features
-- **🤖 Built-in AI Agent & 1-Click Crash Diagnosis:** System crashes monitored via `systemd-coredump` send a notification. Clicking it opens a dedicated Foot terminal running your default agent (`agy`, `claude`, `codex`, `opencode`, or `omp`) with the crash trace and resolution prompt pre-loaded.
-- **⌨️ `Super + K` Cheatsheet Popup:** Searchable, categorized hotkey and mouse guide powered by Rofi. No memorization required.
-- **🎵 Cliamp Retro Music Player:** Terminal-based music player inspired by Winamp 2.x with built-in lo-fi streams (`Super + M`).
-- **📦 Curated Software Suite:** Fast TUIs (`btop`, `dua-cli`, `fastfetch`, `tmux`), modern CLI replacements (`zoxide`, `fzf`, `ripgrep`, `fd`, `bat`, `eza`, `tldr`, `yt-dlp`), and graphical apps (`obsidian`, `localsend`, `libreoffice`, `imv`, `mpv`, `pinta`, `obs-studio`, `kdenlive`, `firefox`, `zen-browser`, `chromium`, `ollama`, `llama.cpp`).
-- **🖱️ Mouse-Friendly Hybrid Workflow:** Natural border-hover resizing (no keys required), `Super + Left-Click Drag` to move, `Super + Right-Click Drag` to resize, and `Super + Middle-Click` to toggle floating.
-- **⚡ Wayland-Native Performance:** Foot terminal, Waybar, Rofi-Wayland, Mako notifications, and Thunar file manager with zero unnecessary overhead.
-- **🚀 1-Command Automated Installer:** Run `./install.sh` on a fresh Arch installation to set up packages, services, and dotfiles.
+The current configuration uses dark Catppuccin-style colors. A broader visual redesign remains outstanding.
 
----
+## 2. Install the base system
 
-## 1. Pre-Installation: 2018 Mac mini (T2 Chip) Checklist
+### Prepare the Mac and installation media
 
-The 2018 Mac mini contains Apple's **T2 Security Chip**, which secures the internal NVMe drive, Wi-Fi (Broadcom BCM4364), Bluetooth, and audio. Before installing Linux, you must perform these steps in macOS:
+Follow the [T2 Linux pre-installation guide](https://wiki.t2linux.org/guides/preinstall/) for partition planning, firmware preparation, and boot settings. In macOS Recovery, Startup Security Utility must allow Linux to boot: set Secure Boot to **No Security** and allow external boot media.
 
-### Step 1: Disable Apple Secure Boot
-1. Shut down the Mac mini.
-2. Hold down **`Command (⌘) + R`** immediately after pressing the power button until you see the Apple logo.
-3. In macOS Recovery, navigate to the top menu bar: **Utilities > Startup Security Utility**.
-4. Authenticate as an administrator.
-5. Set **Secure Boot** to **"No Security"**.
-6. Set **Allowed Boot Media** to **"Allow booting from external media"**.
-7. Restart the Mac.
+Use the [current T2 Arch ISO](https://github.com/t2linux/archiso-t2/releases/latest). Follow its instructions to write it to a USB drive, then boot while holding Option. Flashing an image overwrites the selected USB drive.
 
-### Step 2: Prepare T2-Aware Arch Installation Media
-Standard vanilla Arch ISOs lack drivers for Apple T2 NVMe controllers, internal audio, and Wi-Fi.
-1. Download the pre-patched **T2 Arch Linux ISO** directly from GitHub Releases:
-   - **Direct ISO Download:** [t2linux/archiso-t2 Releases](https://github.com/t2linux/archiso-t2/releases) (e.g., [Release 2026.03.07](https://github.com/t2linux/archiso-t2/releases/tag/2026.03.07))
-   - **Installation Documentation:** [T2 Linux Arch Installation Guide](https://wiki.t2linux.org/distributions/arch/installation/)
-2. Flash the ISO to a USB flash drive using BalenaEtcher, Raspberry Pi Imager, or `dd`:
-   ```bash
-   sudo dd if=archlinux-t2-*.iso of=/dev/sdX bs=4M status=progress oflag=sync
-   ```
-3. Insert the USB drive into the Mac mini, power on, and hold the **`Option (⌥)`** key to select the EFI boot drive.
+Use the [T2 Arch installation guide](https://wiki.t2linux.org/distributions/arch/installation/) for the base installation. Its guided command is currently:
 
----
-
-## 2. Base Arch Installation
-
-Once booted into the live environment:
-
-1. Connect to Wi-Fi if not using Ethernet:
-   ```bash
-   iwctl
-   # station wlan0 scan
-   # station wlan0 get-networks
-   # station wlan0 connect <Your-SSID>
-   ```
-2. Launch the guided installer:
-   ```bash
-   archinstall
-   ```
-3. In `archinstall`, select:
-   - **Audio:** PipeWire
-   - **Network:** systemd-networkd (or NetworkManager)
-   - **Kernel:** `linux-t2` (if prompted or on T2 ISO) or `linux` (add `t2linux` repository post-install)
-   - **Profile:** Minimal / No desktop environment initially
-   - **User:** Create a standard user with `sudo` / `wheel` privileges
-
-> [!IMPORTANT]
-> **T2 Hardware Constraint:** Wi-Fi (Broadcom BCM4364) will **NOT** work immediately upon booting your fresh installation because proprietary firmware (`apple-bcm-firmware`) must be built from the AUR after an internet connection is established. You **MUST** plug an Ethernet cable into the Mac mini onboard port (`enp1s0`) or a USB-Ethernet adapter.
-> 
-> **Time-Saving Tip (Pre-Reboot Network Setup):** Before rebooting out of `archinstall`, select **"Chroot into installation"** from the final menu and run:
-> ```bash
-> printf '[Match]\nName=en*\n\n[Network]\nDHCP=yes\n' > /etc/systemd/network/20-wired.network
-> systemctl enable systemd-networkd systemd-resolved sshd
-> ln -sf /run/systemd/resolve/stub-resolv.conf /etc/resolv.conf
-> exit
-> ```
-> This ensures Ethernet DHCP, DNS, and SSH are already running on the very first boot!
-
-Reboot into your new Arch Linux system.
-
----
-
-## 3. First-Boot Network & SSH Bootstrap (Mac mini Console)
-
-On a minimal Arch install, no DHCP client or NetworkManager runs automatically on first boot. When you plug in an Ethernet cable, the interface stays `DOWN` with no IP address.
-
-To avoid typing endless configuration files by hand on the physical Mac mini keyboard, run these **two quick commands** directly at the login prompt:
-
-### Step 1: Bring Up Wired Network & DNS (1 Line)
-Plug an Ethernet cable into the Mac mini's onboard Ethernet port (`enp1s0`) and run:
 ```bash
-printf '[Match]\nName=en*\n\n[Network]\nDHCP=yes\n' | sudo tee /etc/systemd/network/20-wired.network && sudo systemctl enable --now systemd-networkd systemd-resolved && sudo ln -sf /run/systemd/resolve/stub-resolv.conf /etc/resolv.conf && sudo ip link set enp1s0 up
-```
-*(If using a USB-Ethernet adapter instead of the onboard port, check `ip -br link` and replace `enp1s0` with your adapter name, e.g. `enp0s20f0u4`)*
-
-### Step 2: Enable SSH, Git & NetworkManager (1 Line)
-Once network is up, immediately install OpenSSH, start the SSH server, and display your IP address:
-```bash
-sudo pacman -Syu --needed --noconfirm openssh git networkmanager && sudo systemctl enable --now sshd && ip -br a
-```
-Look for your IP address (e.g. `192.168.1.65/24`) next to `enp1s0`.
-
-*(Alternatively, if you already have the repo on a USB stick, you can simply run `sudo bash bootstrap-network.sh`)*
-
----
-
-## 4. Quick Setup Over Remote SSH (From Your Mac/Laptop)
-
-Now you can **disconnect the keyboard and monitor from your Mac mini** and do everything comfortably from your primary Mac or laptop terminal:
-
-### Step 1: Log in via SSH
-```bash
-ssh yourusername@<MAC_MINI_IP>
+t2archinstall
 ```
 
-*(Optional: Transfer your logged-in `agy` token directly from your Mac to the Mac mini:)*
+Follow the ISO's current instructions if its commands or menus change. Install a T2-capable kernel and configure its boot entry before rebooting. Do not assume a generic Arch kernel provides equivalent T2 support.
+
+For this desktop, use a minimal base system, a regular user with sudo privileges, Bash for the automatic desktop startup described below, and **NetworkManager** for networking. The post-install script supplies PipeWire and the desktop packages.
+
+### Have networking ready before the first reboot
+
+Use onboard Ethernet during setup if available. Wi-Fi depends on suitable firmware, but it is **not inherently an AUR-only, post-install task**: the T2 Arch guide includes `apple-bcm-firmware` in the base installation. See the [T2 Wi-Fi/Bluetooth guide](https://wiki.t2linux.org/guides/wifi-bluetooth/) for firmware alternatives and current driver issues.
+
+While still in the installed system's **chroot**, with working access to its package repositories:
+
 ```bash
-# Run this from your Mac terminal:
-ssh yourusername@<MAC_MINI_IP> "mkdir -p ~/.gemini/antigravity-cli"
-scp ~/.gemini/antigravity-cli/antigravity-oauth-token yourusername@<MAC_MINI_IP>:~/.gemini/antigravity-cli/
+pacman -Syu --needed networkmanager openssh sudo git curl
+systemctl disable systemd-networkd.service systemd-networkd.socket systemd-networkd-wait-online.service
+systemctl enable NetworkManager.service systemd-resolved.service sshd.service
+ln -sfn /run/systemd/resolve/stub-resolv.conf /etc/resolv.conf
 ```
 
-### Step 2: Clone and Run the Installer
+These commands enable services for the installed system's next boot; they do not start services inside the chroot. A message that a networkd unit was not enabled is harmless. Ensure the regular user has a password and sudo access through the base installer.
+
+Use one network manager per interface. Do not also enable networkd or a separate DHCP service on the Ethernet interface managed by NetworkManager. NetworkManager and systemd-resolved perform different jobs and can run together.
+
+After boot, verify:
+
+```bash
+nmcli device status
+ip -4 route
+readlink -e /etc/resolv.conf
+getent hosts archlinux.org
+systemctl is-active NetworkManager systemd-resolved sshd
+```
+
+Interface names must be checked on the actual machine. On this Mac, `enp1s0` is the external Ethernet port; `enp2s0f1u1` is the **internal Apple T2 USB network device**, not another internet connection.
+
+### Recovery only: already installed, but no network
+
+A minimal install can lack a configured network service; it does not inevitably lack one.
+
+If NetworkManager is installed, start it and use its tools:
+
+```bash
+sudo systemctl enable --now NetworkManager systemd-resolved
+sudo ln -sfn /run/systemd/resolve/stub-resolv.conf /etc/resolv.conf
+nmcli device status
+nmtui
+```
+
+If NetworkManager is unavailable and this repository is already accessible from local storage or USB, run from the repository directory:
+
+```bash
+sudo bash bootstrap-network.sh
+```
+
+The script configures networkd for detected external wired interfaces, skips the internal T2 interface, enables resolved, and attempts to install Git, NetworkManager, and OpenSSH. It refuses to run while NetworkManager is active. It needs a working wired uplink and package access; ping failures are warnings, not proof of success.
+
+It leaves networkd handling the recovery connection. The desktop installer later switches to NetworkManager, which can interrupt an SSH session. Prefer completing the NetworkManager setup before remote desktop installation.
+
+Do not run this recovery script on a machine that already has working NetworkManager networking.
+
+## 3. Install this desktop
+
+From the Mac's terminal, or over SSH once networking is verified:
+
 ```bash
 git clone https://github.com/funstuie-bit/arch-hyprland-guide.git
 cd arch-hyprland-guide
 ./install.sh
 ```
 
-The script includes automatic pre-flight checks and will:
-1. Install Intel UHD 630 drivers, Hyprland, Waybar, Rofi, Foot, PipeWire audio, fonts, and utilities.
-2. Install your curated software suite (TUIs, modern shell, GUIs, browsers, and AI tools).
-3. Install **Cliamp** terminal music player directly into `/usr/local/bin/cliamp`.
-4. Install `yay` and AUR packages (`zen-browser-bin`, `localsend-bin`, `mise-bin`, `lm-studio-bin`, `apple-bcm-firmware`).
-5. Enable `NetworkManager`, `bluetooth`, and `ollama` system services.
-6. Back up existing configs and deploy mouse-friendly dotfiles to `~/.config/`.
-7. Set up the AI crash diagnosis daemon and default agent configuration.
+Run as the regular desktop user, **not** as root or with `sudo ./install.sh`. The script invokes sudo itself. `--yes` skips its overall confirmation prompt; package installation also uses noninteractive options.
 
-To start your graphical desktop, either log in on `tty1` (autologin is pre-configured) or run:
-```bash
-start-hyprland
-```
+### What the installer actually changes
 
----
+- Runs a full Arch package upgrade with the core desktop packages. Core package failure stops installation before dotfile deployment.
+- Attempts optional applications, a downloaded Cliamp binary, and AUR packages. Optional failures can be skipped: the final success banner does not prove every application installed.
+- Enables NetworkManager, systemd-resolved, Bluetooth, and attempts to enable Ollama. Disables networkd's service and disables automatic connection on existing profiles identified as the internal T2 device.
+- Moves existing `hypr`, `waybar`, `rofi`, `foot`, and `mako` configuration directories to `~/.config_backup_TIMESTAMP/`, then copies repository versions into `~/.config/`.
+- Installs the Cliamp desktop entry, makes helper scripts executable, and creates `~/Pictures/Screenshots/`.
+- Adds eza/bat aliases and zoxide initialization to the shell configuration. Installing fzf does not itself mean its shell keybindings have been enabled.
+- On detected T2 hardware, configures the community `arch-mact2` repository if missing and installs the T2 kernel, audio configuration, firmware, and fan daemon. Adds the missing Mac mini audio profile when applicable.
+- Writes this setup's Intel graphics workarounds, rebuilds initramfs, and may modify bootloader configuration.
+- Enables **passwordless tty1 autologin** and adds a Bash profile block that launches `Hyprland`.
 
-## 4. Software Suite Installed in This Build
+The script uses a hard-coded community mirror and `SigLevel = Never` when adding `arch-mact2`; that repository is not an official Arch repository, and this setting disables signature checking for it. Consult the [current T2 repository instructions](https://wiki.t2linux.org/distributions/arch/installation/) before a new installation.
 
-### 1. Terminal Utilities & TUIs
-* **`cliamp`**: Retro Winamp 2.x music player with built-in lo-fi streams (`Super + M`).
-* **`btop`**: Beautiful resource monitor for CPU, RAM, disks, and processes (`Super + Ctrl + T`).
-* **`dua-cli`**: Fast interactive disk space explorer (`dua i`).
-* **`fastfetch`**: Fast, modern system information banner.
-* **`tmux`**: Terminal multiplexer for persistent sessions, tabs, and splits.
+The systemd-boot code expects entries under `/boot/loader/entries` and derives kernel options from the first other entry it finds. It is not a general bootloader installer. Review the resulting entry, root options, kernel and initramfs paths before rebooting, especially with encryption or multiple entries.
 
-### 2. Enhanced Shell Replacements
-* **`zoxide` (`z`)**: Intelligent directory jumper that learns your habits (`z doc` jumps straight to `~/Documents/...`).
-* **`fzf`**: Interactive fuzzy finder for files and shell history (`Ctrl + R`).
-* **`ripgrep` (`rg`)**: Ultra-fast regex text search through entire projects.
-* **`fd`**: Intuitive, colorized replacement for `find`.
-* **`bat`**: Syntax-highlighted `cat` with line numbers and git diffs.
-* **`eza`**: Modern, colorized `ls` with tree views and icons.
-* **`tealdeer` (`tldr`)**: Instant, practical command examples instead of 20-page man pages.
-* **`yt-dlp`**: Download video and audio from hundreds of sites directly from the terminal.
+**Do not rerun the whole installer just to update a shortcut or theme.** Its backup covers the listed desktop directories, not every system file it changes.
 
-### 3. Graphical Applications (GUIs)
-* **`localsend`**: Cross-platform, private AirDrop alternative for local network sharing.
-* **`obsidian`**: Extensible Markdown note-taking app (`Super + Shift + O`).
-* **`evince`**: Clean GNOME document and PDF viewer.
-* **`xournalpp`**: PDF annotation, highlighting, and handwriting tool.
-* **`libreoffice-fresh`**: Full office suite (Writer, Calc, Impress).
-* **`pinta`**: Simple paint and image editing program.
-* **`obs-studio`**: Screen recording and live streaming studio.
-* **`kdenlive`**: Multi-track video editor.
-* **`gnome-disk-utility`**: Format drives, check SMART health, and manage partitions.
-* **`imv`**: Ultra-fast Wayland image viewer.
-* **`mpv`**: Minimalist media player with hardware video acceleration.
-* **`pavucontrol`**: Audio mixer and volume control GUI.
+### Applications and package sources
 
-### 4. Web Browsers
-* **`firefox`**: Native Wayland Firefox browser.
-* **`zen-browser`**: Modern Firefox fork focused on vertical tabs, spaces, and speed.
-* **`chromium`**: Fast open-source Chromium browser.
+The arrays in [install.sh](install.sh) are the authoritative package list.
 
-### 5. Communication & Chat
-* **`telegram-desktop`**: Official fast, native Telegram messaging app.
-* **`discord`**: Official Discord voice, video, and community chat client.
+| Source | Packages or applications |
+| --- | --- |
+| Official Arch repositories, required by this script | Hyprland, Waybar, Rofi, Foot, Mako, PipeWire, WirePlumber, Thunar, pavucontrol, portals, polkit agent, network/Bluetooth tools, fonts, clipboard and screenshot tools, hyprlock, hypridle |
+| Official Arch repositories, attempted as optional apps | btop, dua-cli, fastfetch, tmux, zoxide, fzf, ripgrep, fd, bat, eza, tealdeer, yt-dlp, imv, mpv, gnome-disk-utility, Obsidian, Evince, Xournal++, LibreOffice, Pinta, OBS, Kdenlive, Neovim, github-cli, mise, Firefox, Chromium, Telegram, Discord, Ollama, llama-cpp |
+| AUR, through yay | zen-browser-bin, localsend-bin, lm-studio-bin |
+| Direct upstream download | Cliamp, to /usr/local/bin/cliamp |
+| Community arch-mact2 repository | linux-t2, linux-t2-headers, apple-t2-audio-config, apple-bcm-firmware, t2fanrd |
 
-### 6. Development & AI Tools
-* **`neovim`**: Modern terminal code editor.
-* **`mise-bin`**: Universal runtime manager for Node.js, Python, Ruby, Go, and Rust.
-* **`gh`**: Official GitHub command-line interface.
-* **`ollama`**: Local model runner for open-weights models like Llama 3 (`systemctl status ollama`).
-* **`llama.cpp`**: Fast local LLM inference engine.
-* **`lm-studio`**: Desktop GUI for downloading and chatting with local AI models.
-* **AI Coding Agents**: Compatible with `agy` (Google Antigravity), `claude` (Claude Code), `codex`, `opencode`, and `omp` (Oh My Pi).
+Rofi and mise are installed by pacman here, not as `rofi-wayland` or `mise-bin`.
 
----
+### Starting the desktop
 
-## 5. Mouse-Friendly Hyprland Workflow
+On the current machine, tty1 autologin starts the desktop through `start-hyprland` when available, falling back to `Hyprland`. The repository installer currently writes a simpler `exec Hyprland` block; it does not reproduce that wrapper selection.
 
-Unlike strict keyboard-only setups, this configuration is optimized for natural mouse use:
-
-### Natural Border Resizing
-Hover your mouse over any window border or corner and drag to resize, exactly like macOS and Windows—no modifier keys required:
-```ini
-general {
-    resize_on_border = true
-    extend_border_grab_area = 15
-    hover_icon_on_border = true
-}
-```
-
-### Stable Cursor Position
-```ini
-cursor {
-    no_warps = true
-}
-```
-Your mouse cursor will not jump or snap across windows when switching focus.
-
-### Mouse Window Controls
-| Action | Binding |
-| :--- | :--- |
-| **Resize window directly** | Hover over border/corner and click-drag |
-| **Move window** | Hold `Super` + Left-Click Drag |
-| **Resize window** | Hold `Super` + Right-Click Drag |
-| **Toggle Floating** | Hold `Super` + Middle-Click (or `Super + Shift + Space`) |
-| **Switch Workspaces** | Hold `Super` + Mouse Scroll Wheel |
-
-### Interactive Status Bar (Waybar) & Omarchy Menu
-- **Omarchy / Arch Menu Icon (``):** Sleek top-left icon in a translucent pill. Left-click opens the Rofi application launcher (`Super + Space`), right-click opens a new Foot terminal (`Super + Return`).
-- **Workspaces:** Minimalist workspace numbers showing active and urgent states.
-- **Audio:** Scroll to increase/decrease volume. Left-click to toggle mute. Right-click to open `pavucontrol` mixer.
-- **Hardware & Network:** Live CPU usage, RAM utilization, and network connection status.
-- **Clipboard History Icon (`󰅍`):** Quick mouse click to open the `cliphist` clipboard manager.
-- **Shortcuts Cheatsheet Icon (`󰌌`):** Quick mouse click to open the `Super + K` popup cheatsheet.
-- **Clock:** Clean formatted date/time with interactive calendar popup.
-- **Power:** Click power icon or press `Super + Escape` for the system shutdown/reboot/lock menu.
-
-
----
-
-## 6. Shortcuts Cheatsheet
-
-| Shortcut | Action | Description |
-| :--- | :--- | :--- |
-| `Super + C` | **Universal Copy** | Copies selection to clipboard (`Cmd + C`) |
-| `Super + V` | **Universal Paste** | Pastes clipboard (`Cmd + V` — works in terminal & GUI alike!) |
-| `Super + X` | **Universal Cut** | Cuts selection (`Cmd + X`) |
-| `Super + A` | **Select All** | Selects all (`Cmd + A`) |
-| `Super + Ctrl + V` | **Clipboard History** | Opens searchable clipboard manager (Cliphist) |
-| `Super + W` | **Close Window** | Closes the focused window (`Cmd + W`) |
-| `Super + Q` | **Close Window** | Closes the focused window (`Cmd + Q` / Linux standard) |
-| `Super + T` | **Swap Tiled Windows** | Swaps the two halves of the focused window's split |
-| `Super + Shift + Space` | **Toggle Floating** | Detaches window from tiling grid |
-| `Super + J` | **Toggle Split** | Toggles split direction (horizontal / vertical) |
-| `Super + F` | **Fullscreen** | Toggles fullscreen for active window |
-| `Super + K` | **Shortcuts Cheatsheet** | Searchable popup listing all key/mouse shortcuts |
-| `Super + Space` | **App Launcher** | Opens Rofi application search (mouse clickable) |
-| `Super + Return` | **Terminal** | Opens Foot terminal emulator |
-| `Super + Shift + Return`| **Web Browser** | Opens default web browser |
-| `Super + B` | **Web Browser** | Opens default web browser (Firefox/Zen/Chromium) |
-| `Super + E` | **File Manager** | Opens Thunar graphical file manager |
-| `Super + Shift + O`| **Obsidian** | Opens Obsidian notes |
-| `Super + Ctrl + T` | **Activity Monitor** | Opens `btop` system monitor in floating window |
-| `Super + M` | **Cliamp Music** | Launches retro terminal music player |
-| `Super + Shift + A`| **Launch AI Agent** | Opens default agent (`agy`, `claude`, `codex`, `opencode`, `omp`) |
-| `Super + Alt + A` | **Pick AI Agent** | Select / change default AI agent |
-| `Super + Escape` | **System Menu** | Opens power menu (Lock, Logout, Reboot, Shutdown) |
-| `Super + L` | **Address Bar** | Sends Ctrl+L to the focused application |
-| `Super + Ctrl + L` | **Lock Screen** | Locks session via `hyprlock` |
-| `Super + Shift + S`| **Screenshot Area** | Select rectangular area with mouse and copy to clipboard |
-| `PrintScreen` | **Full Screenshot** | Saves screenshot to `~/Pictures/Screenshots/` |
-| `Super + 1 .. 9, 0`| **Workspaces** | Switch to workspaces 1 through 10 |
-| `Super + Shift + 1..0`| **Move to Workspace**| Move active window to chosen workspace |
-| `Super + Arrow Keys`| **Focus Window** | Move focus to left, right, up, or down window |
-
----
-
-## 7. Repository Structure
-
-```text
-arch-hyprland-guide/
-├── install.sh                  # Automated bootstrap script
-├── README.md                   # Complete guide & documentation
-└── dotfiles/
-    ├── applications/
-    │   └── cliamp.desktop      # Desktop launcher entry for Cliamp
-    ├── hypr/
-    │   ├── hyprland.conf       # Hyprland config (mouse borders, keybinds, rules)
-    │   ├── hyprpaper.conf      # Wallpaper daemon config
-    │   └── bin/
-    │       ├── shortcuts-menu.sh  # Super + K searchable cheatsheet
-    │       ├── default-agent.sh   # AI agent selector & launcher (agy, claude, codex, opencode, omp)
-    │       ├── crash-watch.sh     # Background systemd coredump monitor
-    │       └── crash-diagnose.sh  # Auto-diagnosis prompt generator
-    ├── waybar/
-    │   ├── config.jsonc        # Clickable status bar modules
-    │   └── style.css           # Modern translucent pill theme
-    ├── rofi/
-    │   └── config.rasi         # Application launcher with mouse support
-    ├── foot/
-    │   └── foot.ini            # Lightweight Wayland terminal
-    └── mako/
-        └── config              # Desktop notification styling
-```
-
----
-
-## 8. 2018 Mac mini Hardware Troubleshooting
-
-### Apple T2 Kernel, Wi-Fi & Audio
-The installer automatically detects Apple T2 hardware and configures the official `[arch-mact2]` repository and packages. If configuring manually, add the repository to `/etc/pacman.conf`:
-```ini
-[arch-mact2]
-Server = https://mirror.funami.tech/arch-mact2/os/x86_64
-SigLevel = Never
-```
-Then install `linux-t2`, `linux-t2-headers`, `apple-t2-audio-config`, `apple-bcm-firmware`, and `t2fanrd`:
-```bash
-sudo pacman -Syu --needed linux-t2 linux-t2-headers apple-t2-audio-config apple-bcm-firmware t2fanrd
-sudo systemctl enable --now t2fanrd
-```
-
-### Mac mini 3.5 mm headphone jack / external speakers
-
-**Included in `./install.sh`.** The installer detects the 2018 Mac mini
-(`Macmini8,1` or ALSA `AppleT2x1`) and installs its missing audio profile if
-the distribution package does not already provide one. The bundled profile exposes
-the mono internal speaker, stereo headphone jack, and headset microphone.
-It takes effect when the audio session next starts, including after reboot.
-
-This is necessary with `apple-t2-audio-config 0.4.r21.ga973d53-1`: that package
-only includes x2/x4/x6 speaker layouts. On this mini, the missing x1 profile
-caused music to play through the internal speaker even with external speakers plugged in.
-
-To add just this fix to an existing installation, from the repository directory:
+From a local text console, with no desktop session already running, the installed compositor can be started with:
 
 ```bash
-# Only needed when the distribution's AppleT2x1 profile is absent.
+Hyprland
+```
+
+Do not start a second compositor from an existing graphical terminal or assume starting one over SSH will replace the local session.
+
+Some dotfiles contain `/home/stu` paths, notably Waybar helper actions and wallpaper configuration. For another username, adapt these before deployment:
+
+```bash
+rg -n '/home/stu' dotfiles
+```
+
+## 4. Keyboard and mouse controls
+
+`Super` is the Command key on an Apple keyboard, or the Windows key on a typical PC keyboard.
+
+### Windows, tabs, and workspaces
+
+| Shortcut | Action |
+| --- | --- |
+| Super+T | Swap the two halves of the focused window's tiled split |
+| Super+W, Super+Q, Super+Shift+W, Alt+F4 | Close the focused window |
+| Super+J | Toggle the focused tiling split's orientation |
+| Super+Shift+Space or Super+Shift+F | Toggle floating |
+| Super+F | Toggle fullscreen |
+| Super+Arrow | Focus the window in that direction |
+| Alt+Tab | Cycle window focus |
+| Super+1…9,0 | Switch to workspace 1…10 |
+| Super+Shift+1…9,0 | Move the focused window to workspace 1…10 and follow it |
+| Super+G | Toggle window grouping |
+| Super+Alt+G | Move the focused window out of its group |
+| Super+[ or Super+] | Previous or next window in the group |
+| Ctrl+T / Ctrl+W | Application new-tab / close-tab controls, where supported |
+| Super+Shift+T | Send Ctrl+Shift+T, normally reopen a browser tab |
+| Super+L / Super+R | Send Ctrl+L / Ctrl+R, normally browser address bar / reload |
+
+Closing a window is not necessarily quitting every window or background process belonging to that application.
+
+### Launchers, clipboard, and session controls
+
+| Shortcut | Action |
+| --- | --- |
+| Super+K or Alt+K | Searchable shortcut cheatsheet |
+| Super+Space or Alt+Space | Rofi application launcher |
+| Super+Return | Foot terminal |
+| Super+B or Super+Shift+Return | Browser launch command |
+| Super+E | Thunar |
+| Super+Shift+O | Obsidian |
+| Super+Ctrl+T | btop in Foot |
+| Super+M | Cliamp in Foot |
+| Super+Shift+A / Super+Alt+A | Launch / choose an independently installed agent |
+| Super+C | Copy helper: terminal-aware Ctrl+Shift+C or GUI Ctrl+C |
+| Super+V | Send Ctrl+V; the bundled Foot config also maps this to paste |
+| Super+X / Super+A / Super+Z | Send Ctrl+X / Ctrl+A / Ctrl+Z to the application |
+| Super+Ctrl+V | Clipboard history picker; copies selection and attempts Ctrl+V |
+| Super+Shift+S or Super+Print | Capture a selected rectangle |
+| Print or Super+Ctrl+S | Capture the full desktop |
+| Super+Escape | Power/session menu |
+| Super+Ctrl+Q or Super+Ctrl+L | Invoke hyprlock |
+| Super+Shift+Q | Exit Hyprland directly |
+| Volume up/down/mute keys | Adjust default output and show volume popup |
+| Media play/next/previous keys | Control players through playerctl |
+
+Clipboard and editing shortcuts are **not universal macOS emulation**: their behavior depends on the application. Ctrl+A in a terminal, for example, need not mean “select all.” Screenshots are saved to `~/Pictures/Screenshots/` and copied to the clipboard.
+
+The browser binding currently tries `xdg-open http://` followed by Firefox, Chromium, then Zen on command failure. This is not a validated browser-selection system; configure your default browser and verify the binding.
+
+### Mouse and bar
+
+- Drag window borders to resize where the layout allows it.
+- Super or Alt + left-drag moves windows; right-drag resizes; middle-click toggles floating.
+- Super + scroll changes workspaces.
+- Arch icon: left-click opens Rofi, right-click opens Foot.
+- Window title: left-click toggles floating, right-click closes the focused window.
+- Clock: left-click launches a three-month terminal calendar; right-click opens the power menu. The calendar command needs `cal`, which the script does not explicitly install.
+- Volume: scroll changes level, left-click toggles mute, right-click opens pavucontrol. The popup is currently wired to **keyboard** controls, not these bar actions.
+- CPU or memory: left-click opens btop, right-click opens Foot.
+- Network: left-click opens the connection editor, right-click opens nmtui.
+- Clipboard: left-click opens history, right-click clears saved history.
+- Shortcuts: left-click opens help, right-click opens Rofi.
+- Power: left-click opens the session menu, right-click invokes hyprlock.
+
+## 5. Display configuration
+
+The saved setting in [hyprland.conf](dotfiles/hypr/hyprland.conf) is:
+
+```ini
+monitor = DP-1, 5120x2160@30, 0x0, 1
+```
+
+That gives the full **5120×2160 workspace at 100% scaling**. The user previewed and chose it. This connection exposes native resolution at 30 Hz; its Intel driver filters out the monitor's advertised native 60 Hz mode. Dell documents the older Intel graphics limitation in the [U4021QW manual, page 76](https://dl.dell.com/manuals/all-products/esuprt_electronics_accessories/esuprt_electronics_accessories_monitors/dell-u4021qw-monitor_user%27s-guide_en-us.pdf#page=76).
+
+Check the actual connection with `hyprctl monitors`. On this machine, `preferred` previously selected 2560×1080, so it should not be described as “native resolution.”
+
+Changing the final scale value makes text larger and reduces usable workspace. Tested alternatives at native resolution were `1.333333` (approximately 3840×1620 workspace) and `2` (2560×1080 workspace). The previous smoother, lower-resolution setting was `2560x1080@60` at scale `1`.
+
+The file also contains a DP-3 rule and a fallback rule for other connectors. DP-3 is currently disconnected. Giving two monitors the same position does **not** establish Hyprland mirroring.
+
+### Existing graphics workarounds
+
+This machine retains workarounds applied during earlier artifact troubleshooting:
+
+- `i915.enable_fbc=0 i915.enable_psr=0` in the boot options and corresponding options in `/etc/modprobe.d/i915.conf`.
+- `AQ_NO_MODIFIERS=1` in `/etc/environment` and the compositor environment.
+- `cursor { no_hardware_cursors = true }` in Hyprland.
+
+These are this setup's existing workarounds, not proof that every UHD 630 machine needs them or that each one caused the improvement. Their performance cost has not been measured independently.
+
+In `/etc/environment`, use `AQ_NO_MODIFIERS=1` **without** `export`. In a Bash startup file, use `export AQ_NO_MODIFIERS=1`.
+
+## 6. Audio jack and volume popup
+
+### Automatic installation
+
+The T2 section of `install.sh` supplies the missing Mac mini profile when it identifies `AppleT2x1` or `Macmini8,1` and the entry file is absent. The hardware section itself requires the script's T2 detection to succeed.
+
+On this machine, `apple-t2-audio-config 0.4.r21.ga973d53-1` only supplied x2/x4/x6 layouts. Without x1, audio fell back to the mono internal speaker. The repository's x1 profile exposes:
+
+- PCM 0: mono internal speaker.
+- PCM 2: stereo headphone/external-speaker jack.
+- PCM 3: headset microphone input; microphone recording has not been tested here.
+
+The profile is loaded when the audio session next starts. External-speaker playback has been confirmed by the user.
+
+### Add only the audio fix to an existing Mac mini
+
+Run from this repository **on the matching Mac mini**, without rerunning the full installer:
+
+```bash
 if [[ ! -e /usr/share/alsa/ucm2/conf.d/AppleT2x1/AppleT2x1.conf ]]; then
     sudo install -Dm644 system/alsa/ucm2/AppleT2/HiFi-x1.conf /usr/share/alsa/ucm2/AppleT2/HiFi-x1.conf
     sudo install -Dm644 system/alsa/ucm2/conf.d/AppleT2x1/AppleT2x1.conf /usr/share/alsa/ucm2/conf.d/AppleT2x1/AppleT2x1.conf
@@ -354,86 +279,138 @@ fi
 systemctl --user restart wireplumber
 ```
 
-With speakers connected, open `pavucontrol` (right-click the bar's volume icon),
-choose the Mac mini profile containing **Headphones**, and set **External Speakers /
-Headphones** as the fallback/default output. Existing application streams can be
-moved there on the Playback tab. This preference is remembered by WirePlumber.
+Restarting WirePlumber briefly interrupts audio. With speakers connected, use pavucontrol's Configuration tab to select the profile containing **Headphones**, then set **External Speakers / Headphones** as the fallback/default output. Use the Playback tab to move existing streams if needed.
 
-For this bundled profile, the equivalent commands are:
+For the card and bundled profile on this machine:
 
 ```bash
 pactl set-card-profile alsa_card.pci-0000_02_00.3 'HiFi (Headphones, Headset)'
 pactl set-default-sink alsa_output.pci-0000_02_00.3.HiFi__Headphones__sink
+wpctl status
 ```
 
-Verify with `wpctl status`: playback should link to Codec Output's left/right channels.
-External-speaker playback has been confirmed on this machine.
+The default selection is remembered by WirePlumber. Setting the default alone does not guarantee an already pinned stream moves; use the Playback tab. Active jack playback should link to Codec Output's left and right channels.
 
-These two profile files are local additions under `/usr/share/alsa/ucm2`.
-If a future audio package supplies the same paths, reconcile the local additions
-before upgrading; do not blindly overwrite the new package's profiles.
+These two files under `/usr/share/alsa/ucm2/` are local additions, currently not owned by a package. If a future package supplies the same paths, reconcile the local additions before that upgrade.
 
-### Keyboard volume indicator
+### Volume indicator
 
-Volume up/down and mute keys use `~/.config/hypr/bin/volume.sh`.
-Each press displays a bottom-center volume bar and percentage (or mute status)
-for 1.5 seconds. Repeated presses update one popup. It uses the existing Mako
-notification daemon, libnotify, and WirePlumber; no extra OSD daemon is needed.
-The installer deploys the helper, keyboard bindings, and Mako styling together.
-Run `~/.config/hypr/bin/volume.sh show` to preview without changing volume.
+[volume.sh](dotfiles/hypr/bin/volume.sh) changes the default output in 5% steps, retaining the existing 150% ceiling. Mako shows a bottom-center bar and percentage or mute status for 1.5 seconds. Repeated presses replace the popup; it does not enter notification history.
 
-### Intel UHD 630 Graphics Glitch Prevention (Sawtooth / Comb Artifacts)
-On the 2018 Mac mini (Coffee Lake Intel UHD 630), Wayland compositors can suffer from severe horizontal shearing and comb-like artifacts caused by Intel hardware Frame Buffer Compression (FBC) and Color Control Surface (CCS) buffer modifiers. 
+The visual bar fills at 100%; the text still reports levels above 100%. The installer deploys the helper, bindings, and Mako styling together. To preview without changing volume:
 
-To permanently prevent this:
-1. **Disable i915 Frame Buffer Compression & PSR:**
-   Create `/etc/modprobe.d/i915.conf`:
-   ```ini
-   options i915 enable_fbc=0 enable_psr=0
-   ```
-   And append `i915.enable_fbc=0 i915.enable_psr=0` to the `options` line in `/boot/loader/entries/linux-t2.conf`, then run `sudo mkinitcpio -P`.
-2. **Disable DRM Modifiers in Wayland:**
-   Add to `/etc/environment` and `~/.bash_profile`:
-   ```bash
-   export AQ_NO_MODIFIERS=1
-   ```
-   And in `~/.config/hypr/hyprland.conf`:
-   ```ini
-   env = AQ_NO_MODIFIERS,1
-   cursor {
-       no_hardware_cursors = true
-   }
-   ```
-
-### Thunderbolt 3 & High-Resolution Ultrawide Displays
-- For high-resolution displays (such as the Dell U4021QW 5K2K 40" Ultrawide), connect directly via a **Thunderbolt 3 cable** to the Mac mini's USB-C ports (detected as `DP-1`).
-- Avoid connecting multiple display cables (e.g. HDMI and Thunderbolt simultaneously) to the same monitor, as Hyprland will treat them as two separate displays.
-- If text/icons appear too small, open `~/.config/hypr/hyprland.conf` and adjust the monitor scaling line:
-```ini
-# Native resolution with 1.5x or 1.6x HiDPI scaling
-monitor = DP-1, preferred, auto, 1.5
+```bash
+~/.config/hypr/bin/volume.sh show
 ```
 
-### Automatic Login & Direct Desktop Startup
-To boot directly into Hyprland without typing your username, password, or `Hyprland` command:
-1. **Autologin on tty1:** Create `/etc/systemd/system/getty@tty1.service.d/autologin.conf`:
-   ```ini
-   [Service]
-   ExecStart=
-   ExecStart=-/sbin/agetty -o '-p -f -- \\u' --noclear --autologin yourusername %I $TERM
-   ```
-   Then reload systemd: `sudo systemctl daemon-reload`.
-2. **Auto-launch Hyprland:** Add to `~/.bash_profile`:
-   ```bash
-   export AQ_NO_MODIFIERS=1
-   if [[ -z "$WAYLAND_DISPLAY" ]] && [[ "$(tty)" == "/dev/tty1" ]]; then
-       exec Hyprland
-   fi
-   ```
+## 7. Network troubleshooting and known limitations
 
-### Reloading Hyprland
-Whenever you edit `~/.config/hypr/hyprland.conf`, Hyprland reloads automatically. If needed, force a reload and check for syntax errors:
+### Internal T2 interface and slow boot
+
+The internal Apple T2 network device was repeatedly attempting DHCP even after real Ethernet connected. That caused NetworkManager-wait-online to time out after 60 seconds.
+
+Its existing profile was changed to manual activation. On this specific machine:
+
+```bash
+sudo nmcli connection modify uuid 8ebe6759-ce54-3b77-83f1-de7ab2161680 connection.autoconnect no
+```
+
+Do not reuse that UUID on another installation. Identify the device and profile first:
+
+```bash
+nmcli -f NAME,UUID,DEVICE connection show
+udevadm info -q property /sys/class/net/enp2s0f1u1
+journalctl -b -u NetworkManager --no-pager
+```
+
+Here udev identifies `Apple_T2_Controller` / iBridge with driver `cdc_ncm`. The installer disables automatic connection on matching existing profiles, but a profile created later may need the same correction. The wait service subsequently passed within the same second; next-boot timing has not yet been measured.
+
+### DNS and IPv6
+
+The earlier DNS symlink typo was corrected. The intended target is:
+
+```text
+/etc/resolv.conf -> /run/systemd/resolve/stub-resolv.conf
+```
+
+Check both resolver and network state before changing protocol settings:
+
+```bash
+readlink -e /etc/resolv.conf
+resolvectl status
+nmcli device status
+ip -4 route
+getent hosts archlinux.org
+```
+
+IPv6 is still disabled on this host through the Ethernet profile and `ipv6.disable=1` in the kernel command line. The need for that broad workaround has **not** been established independently. It is not a required setup step in this guide.
+
+NetworkManager logged that global `[connection] ipv6.method=disabled` was an unknown key. That ineffective file was renamed to `/etc/NetworkManager/conf.d/disable-ipv6.conf.disabled`. The installer no longer writes it; it does not automatically undo previously applied IPv6 workarounds.
+
+### Features that are present but not fully verified
+
+- **Lock and idle:** hyprlock/hypridle packages and lock bindings exist, but the repository does not supply a dedicated lock-screen or idle configuration and does not start hypridle. Lock, suspend, and wake behavior still need testing.
+- **Agents:** helpers list `agy`, `claude`, `codex`, `opencode`, and `omp`; the installer does not install or authenticate these CLIs. It initially writes `agy` as the default if none is configured. Choose an agent you have installed with Super+Alt+A.
+- **Crash diagnosis:** scripts are included and the watcher is launched with Hyprland. This is not a verified one-click crash diagnosis service: journal permissions/event filtering and agent invocation need testing. The report uses `coredumpctl info`, not a guaranteed full debugger backtrace.
+- **Optional applications:** a launcher or shortcut can exist even if its package failed to install.
+- **Fresh installation:** script syntax and selected error paths were checked; complete installation, bootloader variants, and reboot persistence have not all been tested.
+
+## 8. Configuration, updates, and verification
+
+| Repository path | Installed location or purpose |
+| --- | --- |
+| [install.sh](install.sh) | Post-install packages, services, dotfiles, boot settings |
+| [bootstrap-network.sh](bootstrap-network.sh) | Console network recovery |
+| [HANDOVER.md](HANDOVER.md) | Machine history and repair notes |
+| [dotfiles/hypr/](dotfiles/hypr/) | ~/.config/hypr/: compositor, wallpaper, helper scripts |
+| [dotfiles/waybar/](dotfiles/waybar/) | ~/.config/waybar/: bar layout and style |
+| [dotfiles/rofi/](dotfiles/rofi/) | ~/.config/rofi/: launcher style |
+| [dotfiles/foot/](dotfiles/foot/) | ~/.config/foot/: terminal and paste bindings |
+| [dotfiles/mako/](dotfiles/mako/) | ~/.config/mako/: notifications and volume popup |
+| [dotfiles/applications/cliamp.desktop](dotfiles/applications/cliamp.desktop) | ~/.local/share/applications/cliamp.desktop |
+| [system/alsa/ucm2/](system/alsa/ucm2/) | Missing Mac mini audio profile, installed under /usr/share/alsa/ucm2/ |
+
+Helper scripts include `shortcuts-menu.sh`, `volume.sh`, `copy.sh`, `clipboard-history.sh`, `screenshot.sh`, `system-menu.sh`, `default-agent.sh`, `crash-watch.sh`, and `crash-diagnose.sh`.
+
+### Repository updates do not automatically update the desktop
+
+From a clean repository checkout:
+
+```bash
+git pull --ff-only
+```
+
+Review changes and back up the affected live files before deploying them. The installer **copies** dotfiles; they are not symlinked to this checkout. Likewise, local edits are not on GitHub until committed and pushed.
+
+After deliberately updating the relevant live configuration:
+
 ```bash
 hyprctl reload
 hyprctl configerrors
+makoctl reload
 ```
+
+Hyprland normally reloads its config on changes, but `exec-once` commands do not run again on a reload. Other components may require their own reload or restart.
+
+### Read-only checks
+
+```bash
+hyprctl monitors
+hyprctl configerrors
+wpctl status
+pactl get-default-sink
+systemctl --failed
+systemctl --user --failed
+systemctl --user is-active hyprpolkitagent
+systemd-analyze critical-chain graphical.target
+```
+
+For repository edits:
+
+```bash
+bash -n install.sh bootstrap-network.sh
+for script in dotfiles/hypr/bin/*.sh; do bash -n "$script"; done
+git diff --check
+```
+
+These checks do not replace a fresh-install test or confirmation that physical audio, display, lock, and suspend behavior is correct.
