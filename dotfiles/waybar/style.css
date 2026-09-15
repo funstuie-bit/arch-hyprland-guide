@@ -2,7 +2,7 @@
     border: none;
     border-radius: 0;
     font-family: "JetBrainsMono Nerd Font", "Noto Sans", sans-serif;
-    font-size: 13px;
+    font-size: 14px;
     font-weight: 500;
     min-height: 0;
 }
@@ -12,22 +12,43 @@ window#waybar {
     color: #cdd6f4;
 }
 
-/* Omarchy Menu Icon (Leftmost) */
+/* Start Menu Button */
 #custom-menu {
-    background: rgba(30, 30, 46, 0.88);
-    color: #cba6f7;
-    font-size: 16px;
-    padding: 2px 13px;
+    background: #89b4fa;
+    color: #11111b;
+    font-weight: 700;
+    padding: 2px 14px;
     margin: 3px 4px 3px 2px;
     border-radius: 10px;
-    border: 1px solid rgba(255, 255, 255, 0.08);
     transition: all 0.2s ease-in-out;
 }
 
 #custom-menu:hover {
-    background: rgba(203, 166, 247, 0.2);
-    color: #f5c2e7;
-    border-color: rgba(203, 166, 247, 0.4);
+    background: #b4befe;
+    color: #11111b;
+    box-shadow: 0 0 10px rgba(137, 180, 250, 0.5);
+}
+
+/* Quick launch buttons */
+#custom-term,
+#custom-browser,
+#custom-files,
+#custom-shortcuts {
+    background: rgba(30, 30, 46, 0.88);
+    color: #cdd6f4;
+    padding: 2px 10px;
+    margin: 3px 2px;
+    border-radius: 8px;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    transition: all 0.2s ease-in-out;
+}
+
+#custom-term:hover,
+#custom-browser:hover,
+#custom-files:hover,
+#custom-shortcuts:hover {
+    background: rgba(255, 255, 255, 0.15);
+    color: #89b4fa;
 }
 
 /* Modules pill container */

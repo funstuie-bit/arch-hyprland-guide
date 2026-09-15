@@ -9,6 +9,10 @@
 
     "modules-left": [
         "custom/menu",
+        "custom/term",
+        "custom/browser",
+        "custom/files",
+        "custom/shortcuts",
         "hyprland/workspaces",
         "hyprland/window"
     ],
@@ -21,16 +25,39 @@
         "memory",
         "network",
         "custom/clipboard",
-        "custom/shortcuts",
         "tray",
         "custom/power"
     ],
 
     "custom/menu": {
-        "format": "",
-        "tooltip-format": "Omarchy Menu\nLeft-click: App Launcher (Super + Space)\nRight-click: Terminal (Super + Return)",
+        "format": "  Start",
+        "tooltip-format": "Applications Menu\nLeft-click: Open App Launcher (Super + Space)\nRight-click: Shortcuts Cheatsheet (Super + K)",
         "on-click": "rofi -show drun -show-icons",
-        "on-click-right": "foot"
+        "on-click-right": "/home/stu/.config/hypr/bin/shortcuts-menu.sh"
+    },
+
+    "custom/term": {
+        "format": "",
+        "tooltip-format": "Terminal (Super + Return)",
+        "on-click": "foot"
+    },
+
+    "custom/browser": {
+        "format": "󰈹",
+        "tooltip-format": "Web Browser (Super + B)",
+        "on-click": "xdg-open http:// || firefox || zen-browser || chromium"
+    },
+
+    "custom/files": {
+        "format": "󰝰",
+        "tooltip-format": "File Manager (Super + E)",
+        "on-click": "thunar"
+    },
+
+    "custom/shortcuts": {
+        "format": "󰌌",
+        "tooltip-format": "Shortcuts Cheatsheet (Super + K)",
+        "on-click": "/home/stu/.config/hypr/bin/shortcuts-menu.sh"
     },
 
     "hyprland/workspaces": {
