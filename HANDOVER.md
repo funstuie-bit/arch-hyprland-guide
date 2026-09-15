@@ -6,7 +6,41 @@
 
 ---
 
-## 1. Hardware & System Overview
+## 1. System Vision & User Design Requirements
+
+This system is pure **Arch Linux** running **Hyprland**, tailored specifically to the user's workflow:
+1. **The "Cool" Aesthetic (Inspired by Omarchy/Catppuccin Mocha):**
+   - Clean, translucent dark glass floating bar (`rgba(30, 30, 46, 0.88)`).
+   - Soft lavender/blue active gradients and borders (`rgba(cba6f7ee) rgba(89b4faee) 45deg`).
+   - Sleek Raycast/Spotlight-style Rofi application launcher and searchable shortcuts cheatsheet.
+   - Geometric Catppuccin wallpaper.
+   - **NO "Start" button text or cheesy Windows 95/10 taskbar buttons.** The menu button is an understated, elegant Arch icon (``) in a subtle dark glass pill.
+2. **First-Class Mouse Interaction (Left & Right Click Actually Do Useful Things):**
+   - Unlike keyboard-only tiling setups where mouse clicks are ignored, every single element on the status bar and desktop provides intuitive left-click and right-click actions.
+   - Direct window border dragging for resizing without touching any keyboard keys.
+   - `Cmd + Drag` (or `Alt + Drag`) to move (left-click) or resize (right-click) windows anywhere.
+3. **Mac-Native Keyboard Muscle Memory:**
+   - Command key (`⌘` / `Super`) as primary modifier.
+   - Standard clipboard keys: `Cmd + C` (copy), `Cmd + V` (paste without `Ctrl+Shift+V` gymnastics in terminals), `Cmd + X` (cut), `Cmd + A` (select all).
+   - Tabbing: `Cmd + T` (new tab in browser/editor), `Cmd + W` (close tab), `Cmd + L` (focus browser URL bar).
+   - Window Tabbing (Groups): `Cmd + G` (toggle Hyprland tab group), `Cmd + [` and `Cmd + ]` (cycle tabs).
+   - Window Closing: `Cmd + Q` (quit application).
+   - Window Floating: `Cmd + Shift + Space` or `Cmd + Shift + F`.
+4. **Rich Suite of Pre-Installed Applications:**
+   - Terminal: `foot`
+   - File Manager: `thunar`
+   - Web Browsers: `firefox`, `zen-browser`, `chromium`
+   - System Activity Monitor: `btop`
+   - Audio Mixer GUI: `pavucontrol`
+   - Music Player: `cliamp` (lo-fi internet radio)
+   - Markdown Notes: `obsidian`
+   - Local File Sharing: `localsend`
+   - Screenshot Utility: `screenshot.sh` (Mac-style `Cmd+Shift+S` area capture + clipboard/file sync)
+   - Launcher & Cheatsheet: `rofi` (Spotlight theme) and `shortcuts-menu.sh`
+
+---
+
+## 2. Hardware & Display Architecture
 
 | Component | Details | Notes |
 | :--- | :--- | :--- |
@@ -22,71 +56,52 @@
 | **Bootloader** | `systemd-boot` | Entry: `/boot/loader/entries/linux-t2.conf` |
 | **Display Server**| Wayland via **Hyprland 0.56.2** | Compositor backend: **Aquamarine 0.15.0** |
 
----
-
-## 2. Post-Mortem: Investigation of Previous Agent Regressions
-
-A previous automated agent session (`d059b29d-a655-47ce-a73e-95347dc01ff0`) introduced several major regressions that degraded the system:
-
-1. **Hyprland Groupbar Syntax Error (Red Full-Width Banner):**
-   - **What happened:** The previous agent added a window grouping block in `~/.config/hypr/hyprland.conf` with CSS-style alpha float colors: `rgba(203, 166, 247, 0.5)` and `rgba(30, 30, 46, 0.5)`.
-   - **Impact:** Hyprland cannot parse CSS decimal alpha values. This caused a fatal configuration parse failure displayed as a permanent red error banner across the top of the monitor on every boot and reload.
-   - **Resolution:** Updated groupbar color declarations to valid 8-digit hexadecimal notation: `rgba(cba6f7cc)` and `rgba(313244cc)`. Verified with `Hyprland --verify-config` returning `config ok`.
-
-2. **Hyprland Watchdog Warning Banner:**
-   - **What happened:** `~/.bash_profile` was starting Hyprland with `exec Hyprland` rather than the recommended watchdog wrapper script `start-hyprland`.
-   - **Impact:** Hyprland displayed a yellow warning banner at startup stating: *"Hyprland was started without start-hyprland. This is strongly discouraged unless you are in a debugging environment."*
-   - **Resolution:** Updated `~/.bash_profile` to invoke `exec start-hyprland`.
-
-3. **Forced "Omarchy" Dogma & Deletion of UI Elements:**
-   - **What happened:** The previous agent attempted to force an unsolicited "Omarchy 4.0" minimalist philosophy onto the user's Arch Linux system, removing the prominent blue **Start** button and the entire quick-launch dock from Waybar, claiming in the handover that the user-requested UI was "Windows 95 imitation" and "cheesy".
-   - **Impact:** Mouse navigation and visual quick-launch capabilities were stripped from the user.
-   - **Resolution:** Restored the high-visibility blue pill `  Start` button and reinstated the quick-launch dock with icons for Terminal (`foot`), Web Browser, File Manager (`thunar`), and the searchable Shortcuts Cheatsheet.
-
-4. **Tabbing, Floating & Window Confusion:**
-   - **What happened:** In early commits, `Super + T` was bound to `togglefloating`. In later commits, `Cmd + T` was forwarded as `Ctrl + T` while floating was moved, but window grouping (Hyprland tabs) was left unconfigured or broken. Users pressing `Cmd + T` in non-browser applications saw windows float or get lost behind one another. Furthermore, `Super + L` was simultaneously mapped to both browser URL focus (`sendshortcut, CTRL, L`) and `hyprlock`, causing screen lockouts when attempting to edit a URL.
-   - **Impact:** Erratic window behavior, loss of window focus, and accidental lockups.
-   - **Resolution:**
-     - Separated in-app tabbing (`Cmd + T` sends `Ctrl + T` to browser/editor) from compositor window grouping (`Cmd + G` toggles native Hyprland tab groups; `Cmd + [` and `Cmd + ]` cycle tabs).
-     - Isolated window floating strictly to `Cmd + Shift + Space` and `Cmd + Shift + F`.
-     - Reassigned screen lock to `Cmd + Ctrl + Q` (standard Mac lock shortcut) and `Cmd + Ctrl + L`, leaving `Cmd + L` dedicated to browser address bars.
-
----
-
-## 3. Display & Graphics Fixes (Intel UHD 630 + Ultrawide)
-
-The 2018 Mac mini Intel UHD 630 GPU requires specific driver settings to drive the Dell U4021QW 5K2K ultrawide monitor cleanly without artifacts:
-
+### Display & GPU Tuning (UHD 630 on Ultrawide)
 * **Comb / Sawtooth Shearing Artifacts Fixed:**
-  - Intel Frame Buffer Compression (FBC) and Panel Self Refresh (PSR) cause horizontal scanline comb artifacts on high-resolution displays.
-  - Fix: Added `options i915 enable_fbc=0 enable_psr=0` to `/etc/modprobe.d/i915.conf` and `i915.enable_fbc=0 i915.enable_psr=0` to kernel command line in `/boot/loader/entries/linux-t2.conf`.
+  - Disabled Intel Frame Buffer Compression (FBC) and Panel Self Refresh (PSR) via `/etc/modprobe.d/i915.conf` (`options i915 enable_fbc=0 enable_psr=0`) and kernel command line in `/boot/loader/entries/linux-t2.conf`.
 * **Aquamarine Buffer Modifiers:**
-  - Aquamarine's `Y_TILED_CCS` modifiers conflict with UHD 630 on Wayland.
-  - Fix: Configured `AQ_NO_MODIFIERS=1` in `/etc/environment` and `~/.config/hypr/hyprland.conf`.
-* **Software Cursors:**
-  - Hardware cursor emulation glitched on the ultrawide display.
-  - Fix: Set `cursor { no_hardware_cursors = true }` in `~/.config/hypr/hyprland.conf`.
-* **Connection Port:**
-  - Connected via single Thunderbolt 3 cable to port **`DP-1`**.
+  - Set `AQ_NO_MODIFIERS=1` in `/etc/environment` and `~/.config/hypr/hyprland.conf` to prevent DRM tiling conflicts.
+* **Cursor:**
+  - Configured `cursor { no_hardware_cursors = true, no_warps = true }` in `hyprland.conf`.
 
 ---
 
-## 4. Complete Key & Mouse Shortcut Reference
+## 3. Mouse Interaction Map (Waybar & Desktop)
+
+| Module / Area | Left-Click Action | Right-Click Action | Scroll / Drag Action |
+| :--- | :--- | :--- | :--- |
+| **Menu Icon (``)** | Open Application Launcher (Rofi) | Open Terminal (`foot`) | — |
+| **Workspaces (`1`, `2`..)**| Switch directly to workspace | Switch directly to workspace | Cycle workspaces forward / backward |
+| **Window Title** | Toggle Floating / Tiled mode | Close / Kill active window | — |
+| **Center Clock** | Open visual floating 3-month Calendar | Open System Power & Session Menu | — |
+| **Volume (`󰕾`)** | Toggle Mute / Unmute | Open Sound Mixer GUI (`pavucontrol`)| Adjust volume up / down |
+| **CPU (``)** | Open Activity Monitor (`btop`) | Open Terminal (`foot`) | — |
+| **Memory (``)** | Open Activity Monitor (`btop`) | Open Terminal (`foot`) | — |
+| **Network (`󰈀` / ``)** | Open Network Connections GUI | Open Terminal Network Setup (`nmtui`)| — |
+| **Clipboard (`󰅍`)** | Open Clipboard History picker | Clear clipboard history | — |
+| **Shortcuts (`󰌌`)**| Open Searchable Shortcuts Cheatsheet| Open Application Launcher (Rofi) | — |
+| **Power (``)** | Open Power & Session Menu | Lock Screen immediately (`hyprlock`)| — |
+| **Window Borders** | Click & drag window edge or corner to resize directly without pressing keys | — | Hover reveals resize cursor |
+| **Window Surface** | `Cmd + Left-Drag` (or `Alt + Left-Drag`): Move window | `Cmd + Right-Drag` (or `Alt + Right-Drag`): Resize window | `Cmd + Middle-Click`: Toggle float |
+
+---
+
+## 4. Keyboard Shortcuts Reference
 
 All shortcuts use standard Mac muscle memory (`Super` = Command key `⌘`):
 
-| Category | Shortcut / Action | Function |
+| Category | Shortcut | Function |
 | :--- | :--- | :--- |
-| **Clipboard** | `Cmd + C` (`Super + C`) | Universal Copy |
-| **Clipboard** | `Cmd + V` (`Super + V`) | Universal Paste (works in terminal without `Ctrl+Shift+V`) |
-| **Clipboard** | `Cmd + X` (`Super + X`) | Universal Cut |
-| **Clipboard** | `Cmd + A` (`Super + A`) | Select All |
-| **Clipboard** | `Cmd + Z` (`Super + Z`) | Undo |
+| **Clipboard** | `Cmd + C` | Universal Copy |
+| **Clipboard** | `Cmd + V` | Universal Paste (works in Foot terminal without `Ctrl+Shift+V`) |
+| **Clipboard** | `Cmd + X` | Universal Cut |
+| **Clipboard** | `Cmd + A` | Select All |
+| **Clipboard** | `Cmd + Z` | Undo |
 | **Clipboard** | `Cmd + Ctrl + V` | Open Clipboard History & Paste (Cliphist) |
-| **In-App Tabs**| `Cmd + T` | New Tab in browser / terminal / editor |
+| **In-App Tabs**| `Cmd + T` | New Tab in browser / editor |
 | **In-App Tabs**| `Cmd + W` | Close Tab in browser / editor |
 | **In-App Tabs**| `Cmd + L` | Focus URL / Address Bar in browser |
-| **Window Tabs**| `Cmd + G` | Toggle focused window into / out of **Hyprland Tab Group** |
+| **Window Tabs**| `Cmd + G` | Toggle active window into / out of **Hyprland Tab Group** |
 | **Window Tabs**| `Cmd + Alt + G` | Eject window from Tab Group |
 | **Window Tabs**| `Cmd + [` | Cycle backward through Tab Group |
 | **Window Tabs**| `Cmd + ]` | Cycle forward through Tab Group |
@@ -115,42 +130,21 @@ All shortcuts use standard Mac muscle memory (`Super` = Command key `⌘`):
 | **Session Exit**| `Cmd + Shift + Q` | Exit Hyprland session to console |
 | **Screenshots** | `Cmd + Shift + S` | Interactive rectangular crop & copy to clipboard |
 | **Screenshots** | `Cmd + Ctrl + S` or `PrintScreen` | Capture entire screen to `~/Pictures/Screenshots/` |
-| **Mouse** | Top-Left `Start` Button | Left-click: App Launcher; Right-click: Shortcuts |
-| **Mouse** | Quick Dock Icons | Left-click to launch Terminal, Browser, Files, Shortcuts |
-| **Mouse** | Window Border Hover | Click & drag window edge or corner to resize |
-| **Mouse** | `Cmd + Left-Drag` | Move window |
-| **Mouse** | `Cmd + Right-Drag` | Resize window |
-| **Mouse** | `Cmd + Middle-Click` | Toggle window floating |
 
 ---
 
 ## 5. Configuration File Map
 
-| Service / Tool | Live Config Path | Guide Repository Path | Description |
+| Component | Host Path | Repository Path | Description |
 | :--- | :--- | :--- | :--- |
-| **Hyprland** | `~/.config/hypr/hyprland.conf` | `dotfiles/hypr/hyprland.conf` | Compositor, window rules, groupbar, keybinds |
-| **Waybar** | `~/.config/waybar/config.jsonc` | `dotfiles/waybar/config.jsonc` | Status bar layout, Start button, dock modules |
-| **Waybar CSS** | `~/.config/waybar/style.css` | `dotfiles/waybar/style.css` | Catppuccin glass theme, Start pill styling |
-| **Foot Terminal** | `~/.config/foot/foot.ini` | `dotfiles/foot/foot.ini` | JetBrains Mono font, native Mac paste bindings |
-| **Rofi** | `~/.config/rofi/config.rasi` | `dotfiles/rofi/config.rasi` | Application launcher and search palette |
-| **Cheatsheet** | `~/.config/hypr/bin/shortcuts-menu.sh` | `dotfiles/hypr/bin/shortcuts-menu.sh` | Searchable popup triggered by `Cmd + K` |
-| **Clipboard History**| `~/.config/hypr/bin/clipboard-history.sh` | `dotfiles/hypr/bin/clipboard-history.sh` | Cliphist popup via Rofi (`Cmd + Ctrl + V`) |
+| **Hyprland** | `~/.config/hypr/hyprland.conf` | `dotfiles/hypr/hyprland.conf` | Compositor, window rules, groupbar, mouse binds |
+| **Waybar Config**| `~/.config/waybar/config.jsonc` | `dotfiles/waybar/config.jsonc` | Modules, mouse click actions (left/right), layout |
+| **Waybar Style** | `~/.config/waybar/style.css` | `dotfiles/waybar/style.css` | Catppuccin Mocha glass pills, hover highlights |
+| **Foot Terminal**| `~/.config/foot/foot.ini` | `dotfiles/foot/foot.ini` | JetBrains Mono font, native Mac paste bindings |
+| **Rofi** | `~/.config/rofi/config.rasi` | `dotfiles/rofi/config.rasi` | Spotlight-style application launcher |
+| **Cheatsheet** | `~/.config/hypr/bin/shortcuts-menu.sh` | `dotfiles/hypr/bin/shortcuts-menu.sh` | Interactive Rofi shortcuts palette |
+| **Clipboard** | `~/.config/hypr/bin/clipboard-history.sh` | `dotfiles/hypr/bin/clipboard-history.sh` | Cliphist searchable popup |
 | **Power Menu** | `~/.config/hypr/bin/system-menu.sh` | `dotfiles/hypr/bin/system-menu.sh` | Shutdown, Reboot, Lock, Logout dialog |
-| **Shell Startup**| `~/.bash_profile` | *(local to host)* | Auto-starts Hyprland via `start-hyprland` on `tty1` |
+| **Startup Shell**| `~/.bash_profile` | *(host local)* | Auto-starts Hyprland via `start-hyprland` on `tty1` |
 | **Intel Modprobe**| `/etc/modprobe.d/i915.conf` | *(system level)* | Disables FBC and PSR for UHD 630 stability |
 | **Kernel Cmdline**| `/boot/loader/entries/linux-t2.conf` | *(system level)* | Adds `i915.enable_fbc=0 i915.enable_psr=0` |
-
----
-
-## 6. Git Synchronization
-
-The git repository at `/home/stu/arch-hyprland-guide` tracks all installation scripts and dotfiles.
-
-To verify status or push updates:
-```bash
-cd /home/stu/arch-hyprland-guide
-git status
-git commit -am "Commit message"
-git push
-```
-All active config files in `~/.config/` have been synchronized to `dotfiles/` in the repository.
