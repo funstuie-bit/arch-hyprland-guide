@@ -20,10 +20,10 @@
         "cpu",
         "memory",
         "network",
+        "tray",
         "custom/clipboard",
         "custom/shortcuts",
         "custom/settings",
-        "tray",
         "custom/power"
     ],
 

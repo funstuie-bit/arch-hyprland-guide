@@ -152,6 +152,18 @@ The arrays in [install.sh](install.sh) are the authoritative package list.
 
 Rofi and mise are installed by pacman here, not as `rofi-wayland` or `mise-bin`.
 
+### Optional: CodexBar in the top bar
+
+CodexBar **0.60.3** was installed separately on this Mac on September 15, 2026, using the official x86_64 Linux desktop and CLI release archives after verifying both SHA-256 checksums. The base installer does not download CodexBar; for another machine follow the [upstream Linux installation guide](https://github.com/steipete/CodexBar/blob/main/Integrations/Linux/README.md), without `--omarchy`.
+
+- Its small two-bar usage meter appears in Waybar's tray, directly beside the network/IP indicator. Click to open usage; right-click for the app menu and Settings. You can also search for **CodexBar** in the application launcher.
+- It uses the existing Codex login. Provider selection, refresh interval, tray visibility, and Start at login are controlled in **CodexBar's own Settings**, not the desktop appearance app. Closing its window leaves the tray app running.
+- The CLI and resource bundle live in `~/.local/lib/codexbar-cli/`; `~/.local/bin/codexbar` links there. The desktop executable is `~/.local/bin/codexbar-linux`; preferences are in `~/.config/codexbar/linux.json`. Credentials are not copied into this repository.
+- Plain Hyprland does not process XDG autostart entries here, so the optional `codexbar-start.sh` helper starts it at login only when installed and its generated autostart entry is enabled. Disabling Start at login in CodexBar is respected. No Omarchy adapter is installed.
+- Qt runtime dependencies are `qt6-base`, `qt6-declarative`, `qt6-svg`, and `qt6-wayland`; they were already installed on this Mac. CodexBar's optional terminal-based sign-in buttons additionally require `xdg-terminal-exec`, which is not installed here. If a new login is needed, run the provider CLI in Foot, then refresh CodexBar.
+
+For upgrades, follow the upstream instructions; preserve the CLI resource bundle. To remove it, quit CodexBar and follow upstream's removal paths. The guarded startup helper does nothing when the app is absent.
+
 ### Starting the desktop
 
 On the current machine, tty1 autologin starts the desktop through `start-hyprland` when available, falling back to `Hyprland`. The repository installer currently writes a simpler `exec Hyprland` block; it does not reproduce that wrapper selection.
