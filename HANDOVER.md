@@ -1,12 +1,27 @@
 # System Handover & Technical State Document
 **Host:** `maclinux` (2018 Intel Mac mini / T2)  
 **Primary User:** `stu` (`funstuie-bit` on GitHub)  
-**Date Updated:** September 14, 2026  
+**Date Updated:** September 15, 2026
 **Repository:** [https://github.com/funstuie-bit/arch-hyprland-guide](https://github.com/funstuie-bit/arch-hyprland-guide) (local clone at `/home/stu/arch-hyprland-guide`)
 
 ---
 
 ## 1. System Vision & User Design Requirements
+
+### Window workflow corrected (September 15, 2026)
+
+This section supersedes the earlier Super+T implementation. The user's goal is Omarchy-like usability on independent Arch, not a collection of arbitrary Mac-style shortcuts. The earlier interpretation of Super+T as `swapsplit` was wrong for that goal. Research sources, all mappings, deliberate deviations, and practical instructions are in [docs/window-controls.md](docs/window-controls.md).
+
+- Inspected the two September 15 screenshots: four full-height tiled windows. Live state confirmed dwindle, not scrolling. Existing mouse bindings resized shared tile boundaries, not independent floating-window edges.
+- Super+T now toggles floating/tiling; Super+J remains the split-orientation toggle. Added directional swaps, keyboard width/height resizing (repeatable 25/100/300-pixel increments), workspace navigation/silent moves, scratchpad, group navigation, maximize, tiled application fullscreen, pinned pop-out, and per-workspace dwindle/scrolling switching.
+- Resolved collisions: Super+L now changes layout (Ctrl+L remains browser location), Super+Shift+F opens Thunar, and Super+Shift+Space toggles Waybar. Preserved Super+comma Settings and existing user-selected app/music/screenshot aliases. No Omarchy packages or helpers installed.
+- Added `dotfiles/hypr/window-controls.conf` and `dotfiles/hypr/bin/window-controls.sh`; deployed to the corresponding live paths and sourced by `hyprland.conf`. The existing installer copies them automatically. Dwindle remains the default; `force_split=2` and scrolling width 0.49 match the researched defaults. Layout toggle is runtime-only, like the reviewed upstream helper.
+- Super+Alt+Space opens a local desktop menu with window/layout controls and Settings pages. Super+K includes described controls from live `hyprctl binds`, reducing future documentation drift. Settings Help and README updated too.
+- Pre-change backup: `/home/stu/window-controls-backup.WFHQQl/`. Live edits preserve the user's Northern sky colors and selected wallpaper, native display, network and audio configuration.
+- Validation includes the existing 12 Settings tests, shell syntax, configerrors, duplicate-bind audit (only intentional Alt+Tab pairs), and `tests/window_controls_live.py --live`. The live test exercises registered binding actions on disposable windows, not physical input. An attempted wtype test opened the power menu because virtual-key mapping differed; those menus were cancelled without selecting any power action. Do not mistake virtual-key results for hardware keyboard behaviour.
+- Existing full-height tiles do not magically rearrange on config reload. Super+J changes a local split; Super+T gives independent edges. Do not promise free independent resizing while keeping all windows tiled.
+- After successful live tests, changed workspace 1's existing four columns into two top/bottom pairs by toggling each pair's split; verified both columns now have horizontal dividers. No working applications were closed. This is session layout state, not a hard-coded window-placement rule.
+- Live action tests passed: float/retile, horizontal and vertical floating resize, top/bottom tiling and vertical tiled resize, directional swap, maximize/restore, application fullscreen within tile/restore, both layout switches, and pin/unpin/retile. Physical keyboard/mouse confirmation is left to the user.
 
 ### Graphical Settings added (September 14, 2026)
 

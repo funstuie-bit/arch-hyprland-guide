@@ -11,18 +11,15 @@ SHORTCUTS=(
     "📋 CLIPBOARD	Super + X	Universal Cut (Cmd + X)"
     "📋 CLIPBOARD	Super + A	Select All (Cmd + A)"
     "📋 CLIPBOARD	Super + Ctrl + V	Open Clipboard History & Paste (Cliphist)"
-    "🪟 WINDOWS	Super + T	Swap the two halves of the focused tiled split"
     "🪟 WINDOWS	Super + W	Close focused window"
     "📑 TABS & APPS	Ctrl + T / W	New / Close tab in browser or editor"
     "📑 TABS & APPS	Super + Shift + T	Reopen closed tab in browser"
-    "📑 TABS & APPS	Super + L	Focus URL bar in browser (Cmd + L)"
+    "📑 TABS & APPS	Ctrl + L	Focus URL bar in browser"
     "🪟 GROUPS/TABS	Super + G	Toggle window into/out of Tab Group"
     "🪟 GROUPS/TABS	Super + Alt + G	Eject window from Tab Group"
     "🪟 GROUPS/TABS	Super + [ / ]	Previous / Next Tab in Group"
     "🪟 WINDOWS	Super + Q	Close focused window (Cmd + Q)"
     "🪟 WINDOWS	Super + Shift + W	Close focused window"
-    "🪟 WINDOWS	Super + Shift + Space	Toggle window floating mode"
-    "🪟 WINDOWS	Super + Shift + F	Toggle window floating mode"
     "🪟 WINDOWS	Super + F	Toggle fullscreen"
     "🪟 WINDOWS	Super + J	Toggle split direction (horizontal / vertical)"
     "🪟 WINDOWS	Super + Arrow Keys	Navigate focus between windows"
@@ -67,6 +64,20 @@ for item in "${SHORTCUTS[@]}"; do
     IFS=$'\t' read -r cat key desc <<< "$item"
     MENU_ITEMS+="$(format_row "$cat" "$key" "$desc")"$'\n'
 done
+
+# Described controls come from the running compositor so new bindings are not
+# hidden behind a stale hand-written list. The older unlabelled binds stay above.
+LIVE_CONTROLS=$(hyprctl -j binds | jq -r '
+  .[] | select(.has_description) |
+  .modmask as $m |
+  ([if ($m / 64 | floor % 2) == 1 then "Super" else empty end,
+    if ($m / 4 | floor % 2) == 1 then "Ctrl" else empty end,
+    if ($m / 8 | floor % 2) == 1 then "Alt" else empty end,
+    if ($m % 2) == 1 then "Shift" else empty end,
+    (if .keycode == 20 then "Minus" elif .keycode == 21 then "Equal"
+     else .key end)] | join(" + ")) as $key |
+  "CONTROLS │  \($key) │  \(.description)"')
+MENU_ITEMS="$LIVE_CONTROLS"$'\n'"$MENU_ITEMS"
 
 # Show in Rofi
 echo -e "$MENU_ITEMS" | rofi -dmenu \

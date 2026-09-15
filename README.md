@@ -16,7 +16,7 @@ Reviewed against the repository and running machine on **September 14, 2026**. T
 | Internal T2 network interface | Automatic DHCP disabled on its existing NetworkManager profile |
 | Audio | Stereo external speakers through the 3.5 mm jack; user confirmed working |
 | Volume keys | Bottom-center volume/mute popup using Mako |
-| Window controls | Super+T swaps a tiled split; Super+W closes the focused window |
+| Window controls | Super+T toggles tiled/floating; Super+J changes split direction; keyboard/mouse resizing |
 | Help | Super+K opens the searchable shortcut list |
 | Settings | Super+, or the top-bar gear opens graphical desktop settings |
 
@@ -174,14 +174,26 @@ rg -n '/home/stu' dotfiles
 
 `Super` is the Command key on an Apple keyboard, or the Windows key on a typical PC keyboard.
 
+**Updated September 15:** core window controls were compared with Omarchy's actual defaults and corrected. Read the [window-controls guide and compatibility audit](docs/window-controls.md) for all mappings and intentional differences.
+
+**Stuck with full-height columns?** Focus a tile and press **Super+J** to turn its pair into a top/bottom split. **Super+T** makes a window float so you can move/resize it independently with **Super+left/right-drag**. **Super+Minus/Equal** resizes width; add **Shift** for height. Tiled resizing adjusts shared dividers, so a full-height tile cannot independently shrink vertically without changing its split or floating it.
+
+**Super+Alt+Space** opens a desktop-controls menu. **Super+L** switches the current workspace between dwindle and scrolling layouts; it no longer acts as the browser address bar (use **Ctrl+L**).
+
 ### Windows, tabs, and workspaces
 
 | Shortcut | Action |
 | --- | --- |
-| Super+T | Swap the two halves of the focused window's tiled split |
+| Super+T | Toggle tiled / freely floating window |
 | Super+W, Super+Q, Super+Shift+W, Alt+F4 | Close the focused window |
 | Super+J | Toggle the focused tiling split's orientation |
-| Super+Shift+Space or Super+Shift+F | Toggle floating |
+| Super+Shift+Space | Show/hide the top bar |
+| Super+Shift+F | Open file manager |
+| Super+Shift+Arrow | Swap window in that direction |
+| Super+Minus/Equal | Resize width; add Shift for height (hold to repeat) |
+| Super+L | Switch current workspace between dwindle and scrolling |
+| Super+Alt+F | Maximize while retaining application tabs |
+| Super+O | Toggle floating and pinned across workspaces |
 | Super+F | Toggle fullscreen |
 | Super+Arrow | Focus the window in that direction |
 | Alt+Tab | Cycle window focus |
@@ -192,7 +204,7 @@ rg -n '/home/stu' dotfiles
 | Super+[ or Super+] | Previous or next window in the group |
 | Ctrl+T / Ctrl+W | Application new-tab / close-tab controls, where supported |
 | Super+Shift+T | Send Ctrl+Shift+T, normally reopen a browser tab |
-| Super+L / Super+R | Send Ctrl+L / Ctrl+R, normally browser address bar / reload |
+| Ctrl+L / Super+R | Browser address bar / existing refresh alias |
 
 Closing a window is not necessarily quitting every window or background process belonging to that application.
 

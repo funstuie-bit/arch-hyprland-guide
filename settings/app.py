@@ -368,7 +368,7 @@ class Window(Gtk.ApplicationWindow):
 
     def help_page(self):
         page = self.page("help", "Shortcuts & help", "Everyday controls for your desktop.")
-        for title, description in (("Super + ,", "Open Settings"), ("Super + K", "Search the full shortcut list"), ("Super + T", "Swap tiled windows"), ("Super + W", "Close the focused window"), ("Super + Space", "Find and open an application")):
+        for title, description in (("Super + ,", "Open Settings"), ("Super + Alt + Space", "Desktop control menu"), ("Super + K", "Search the full shortcut list"), ("Super + T", "Switch tiled / freely floating"), ("Super + J", "Switch side-by-side / top-bottom split"), ("Super + L", "Switch dwindle / scrolling layout"), ("Super + Right-drag", "Resize (float first for independent edges)"), ("Super + - / =", "Resize width; add Shift for height"), ("Super + Shift + Arrows", "Swap windows in a direction"), ("Super + W", "Close the focused window"), ("Super + Space", "Find and open an application")):
             row = Gtk.Box(spacing=16)
             key = label(title, "section")
             key.set_size_request(180, -1)
