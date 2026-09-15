@@ -222,17 +222,18 @@ Your mouse cursor will not jump or snap across windows when switching focus.
 | **Resize window directly** | Hover over border/corner and click-drag |
 | **Move window** | Hold `Super` + Left-Click Drag |
 | **Resize window** | Hold `Super` + Right-Click Drag |
-| **Toggle Floating** | Hold `Super` + Middle-Click (or `Super + V`) |
+| **Toggle Floating** | Hold `Super` + Middle-Click (or `Super + T`) |
 | **Switch Workspaces** | Hold `Super` + Mouse Scroll Wheel |
 
-### Interactive Status Bar (Waybar) & Start Menu
-- **` Start` Button:** Distinct blue pill button on the top-left that opens the mouse-friendly Rofi application launcher.
-- **Quick-Launch Dock:** Dedicated buttons next to the Start button for Terminal (`foot`), Web Browser, File Manager (`thunar`), and the Shortcuts Cheatsheet.
-- **Workspaces:** Click any number to jump to that workspace.
-- **Audio:** Scroll to increase/decrease volume. Left-click to mute. Right-click to open `pavucontrol` mixer.
-- **Network:** Click to open network connection manager (`nm-connection-editor`).
-- **Clock:** Displays formatted date/time with interactive calendar tooltip.
-- **Power:** Click power icon to lock screen or display power options.
+### Interactive Status Bar (Waybar) & Omarchy Menu
+- **Omarchy / Arch Menu Icon (``):** Sleek top-left icon in a translucent pill. Left-click opens the Rofi application launcher (`Super + Space`), right-click opens a new Foot terminal (`Super + Return`).
+- **Workspaces:** Minimalist workspace numbers showing active and urgent states.
+- **Audio:** Scroll to increase/decrease volume. Left-click to toggle mute. Right-click to open `pavucontrol` mixer.
+- **Hardware & Network:** Live CPU usage, RAM utilization, and network connection status.
+- **Clipboard History Icon (`󰅍`):** Quick mouse click to open the `cliphist` clipboard manager.
+- **Shortcuts Cheatsheet Icon (`󰌌`):** Quick mouse click to open the `Super + K` popup cheatsheet.
+- **Clock:** Clean formatted date/time with interactive calendar popup.
+- **Power:** Click power icon or press `Super + Escape` for the system shutdown/reboot/lock menu.
 
 
 ---
@@ -241,19 +242,28 @@ Your mouse cursor will not jump or snap across windows when switching focus.
 
 | Shortcut | Action | Description |
 | :--- | :--- | :--- |
+| `Super + C` | **Universal Copy** | Copies selection to clipboard (`Cmd + C`) |
+| `Super + V` | **Universal Paste** | Pastes clipboard (`Cmd + V` — works in terminal & GUI alike!) |
+| `Super + X` | **Universal Cut** | Cuts selection (`Cmd + X`) |
+| `Super + A` | **Select All** | Selects all (`Cmd + A`) |
+| `Super + Ctrl + V` | **Clipboard History** | Opens searchable clipboard manager (Cliphist) |
+| `Super + W` | **Close Window** | Closes the focused window (`Cmd + W`) |
+| `Super + Q` | **Close Window** | Closes the focused window (`Cmd + Q` / Linux standard) |
+| `Super + T` | **Toggle Floating** | Detaches window from tiling grid |
+| `Super + J` | **Toggle Split** | Toggles split direction (horizontal / vertical) |
+| `Super + F` | **Fullscreen** | Toggles fullscreen for active window |
 | `Super + K` | **Shortcuts Cheatsheet** | Searchable popup listing all key/mouse shortcuts |
 | `Super + Space` | **App Launcher** | Opens Rofi application search (mouse clickable) |
-| `Super + Enter` | **Terminal** | Opens Foot terminal emulator |
+| `Super + Return` | **Terminal** | Opens Foot terminal emulator |
+| `Super + Shift + Return`| **Web Browser** | Opens default web browser |
 | `Super + B` | **Web Browser** | Opens default web browser (Firefox/Zen/Chromium) |
+| `Super + E` | **File Manager** | Opens Thunar graphical file manager |
 | `Super + Shift + O`| **Obsidian** | Opens Obsidian notes |
 | `Super + Ctrl + T` | **Activity Monitor** | Opens `btop` system monitor in floating window |
 | `Super + M` | **Cliamp Music** | Launches retro terminal music player |
 | `Super + Shift + A`| **Launch AI Agent** | Opens default agent (`agy`, `claude`, `codex`, `opencode`, `omp`) |
 | `Super + Alt + A` | **Pick AI Agent** | Select / change default AI agent |
-| `Super + E` | **File Manager** | Opens Thunar graphical file manager |
-| `Super + Q` | **Close Window** | Closes the focused window |
-| `Super + V` | **Toggle Floating** | Detaches window from tiling grid |
-| `Super + F` | **Fullscreen** | Toggles fullscreen for active window |
+| `Super + Escape` | **System Menu** | Opens power menu (Lock, Logout, Reboot, Shutdown) |
 | `Super + L` | **Lock Screen** | Locks session via `hyprlock` |
 | `Super + Shift + S`| **Screenshot Area** | Select rectangular area with mouse and copy to clipboard |
 | `PrintScreen` | **Full Screenshot** | Saves screenshot to `~/Pictures/Screenshots/` |

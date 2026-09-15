@@ -2,7 +2,7 @@
     border: none;
     border-radius: 0;
     font-family: "JetBrainsMono Nerd Font", "Noto Sans", sans-serif;
-    font-size: 14px;
+    font-size: 13px;
     font-weight: 500;
     min-height: 0;
 }
@@ -12,43 +12,22 @@ window#waybar {
     color: #cdd6f4;
 }
 
-/* Start Menu Button */
+/* Omarchy Menu Icon (Leftmost) */
 #custom-menu {
-    background: #89b4fa;
-    color: #11111b;
-    font-weight: 700;
-    padding: 2px 14px;
+    background: rgba(30, 30, 46, 0.88);
+    color: #cba6f7;
+    font-size: 16px;
+    padding: 2px 13px;
     margin: 3px 4px 3px 2px;
     border-radius: 10px;
-    transition: all 0.2s ease-in-out;
-}
-
-#custom-menu:hover {
-    background: #b4befe;
-    color: #11111b;
-    box-shadow: 0 0 10px rgba(137, 180, 250, 0.5);
-}
-
-/* Quick launch buttons */
-#custom-term,
-#custom-browser,
-#custom-files,
-#custom-shortcuts {
-    background: rgba(30, 30, 46, 0.85);
-    color: #cdd6f4;
-    padding: 2px 10px;
-    margin: 3px 2px;
-    border-radius: 8px;
     border: 1px solid rgba(255, 255, 255, 0.08);
     transition: all 0.2s ease-in-out;
 }
 
-#custom-term:hover,
-#custom-browser:hover,
-#custom-files:hover,
-#custom-shortcuts:hover {
-    background: rgba(255, 255, 255, 0.15);
-    color: #89b4fa;
+#custom-menu:hover {
+    background: rgba(203, 166, 247, 0.2);
+    color: #f5c2e7;
+    border-color: rgba(203, 166, 247, 0.4);
 }
 
 /* Modules pill container */
@@ -59,10 +38,12 @@ window#waybar {
 #cpu,
 #memory,
 #network,
+#custom-clipboard,
+#custom-shortcuts,
 #tray,
 #custom-power {
-    background: rgba(30, 30, 46, 0.85);
-    padding: 2px 12px;
+    background: rgba(30, 30, 46, 0.88);
+    padding: 2px 11px;
     margin: 3px 2px;
     border-radius: 10px;
     border: 1px solid rgba(255, 255, 255, 0.08);
@@ -75,9 +56,10 @@ window#waybar {
 
 #workspaces button {
     padding: 0 8px;
-    color: #a6adc8;
+    color: #6c7086;
     border-radius: 6px;
     margin: 3px 2px;
+    font-weight: 600;
     transition: all 0.2s ease-in-out;
 }
 
@@ -87,7 +69,7 @@ window#waybar {
 }
 
 #workspaces button.active {
-    background: #89b4fa;
+    background: #cba6f7;
     color: #11111b;
     font-weight: bold;
 }
@@ -99,7 +81,8 @@ window#waybar {
 
 /* Window title */
 #window {
-    color: #bac2de;
+    color: #a6adc8;
+    font-style: normal;
 }
 
 /* Clock */
@@ -134,6 +117,25 @@ window#waybar {
     color: #f38ba8;
 }
 
+/* Clipboard History & Shortcuts Icons */
+#custom-clipboard {
+    color: #89b4fa;
+    padding: 2px 10px;
+}
+
+#custom-clipboard:hover {
+    background: rgba(137, 180, 250, 0.2);
+}
+
+#custom-shortcuts {
+    color: #b4befe;
+    padding: 2px 10px;
+}
+
+#custom-shortcuts:hover {
+    background: rgba(180, 190, 254, 0.2);
+}
+
 /* Tray & Power */
 #tray {
     padding: 0 10px;
@@ -141,8 +143,8 @@ window#waybar {
 
 #custom-power {
     color: #f38ba8;
-    padding-right: 14px;
-    padding-left: 12px;
+    padding-right: 12px;
+    padding-left: 10px;
 }
 
 #custom-power:hover {

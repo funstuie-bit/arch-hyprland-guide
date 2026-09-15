@@ -1,7 +1,7 @@
 {
     "layer": "top",
     "position": "top",
-    "height": 38,
+    "height": 34,
     "spacing": 4,
     "margin-top": 6,
     "margin-left": 10,
@@ -9,10 +9,6 @@
 
     "modules-left": [
         "custom/menu",
-        "custom/term",
-        "custom/browser",
-        "custom/files",
-        "custom/shortcuts",
         "hyprland/workspaces",
         "hyprland/window"
     ],
@@ -24,39 +20,17 @@
         "cpu",
         "memory",
         "network",
+        "custom/clipboard",
+        "custom/shortcuts",
         "tray",
         "custom/power"
     ],
 
     "custom/menu": {
-        "format": "  Start",
-        "tooltip-format": "Applications Menu\nLeft-click: Open App Launcher (Super + Space)\nRight-click: Shortcuts Cheatsheet (Super + K)",
+        "format": "",
+        "tooltip-format": "Omarchy Menu\nLeft-click: App Launcher (Super + Space)\nRight-click: Terminal (Super + Return)",
         "on-click": "rofi -show drun -show-icons",
-        "on-click-right": "/home/stu/.config/hypr/bin/shortcuts-menu.sh"
-    },
-
-    "custom/term": {
-        "format": "",
-        "tooltip-format": "Terminal (Super + Return)",
-        "on-click": "foot"
-    },
-
-    "custom/browser": {
-        "format": "󰈹",
-        "tooltip-format": "Web Browser (Super + B)",
-        "on-click": "xdg-open http:// || firefox || zen-browser || chromium"
-    },
-
-    "custom/files": {
-        "format": "󰝰",
-        "tooltip-format": "File Manager (Super + E)",
-        "on-click": "thunar"
-    },
-
-    "custom/shortcuts": {
-        "format": "󰌌",
-        "tooltip-format": "Shortcuts Cheatsheet (Super + K)",
-        "on-click": "/home/stu/.config/hypr/bin/shortcuts-menu.sh"
+        "on-click-right": "foot"
     },
 
     "hyprland/workspaces": {
@@ -68,12 +42,12 @@
 
     "hyprland/window": {
         "format": "{title}",
-        "max-length": 35,
+        "max-length": 45,
         "separate-outputs": true
     },
 
     "clock": {
-        "format": "󰃰  {:%a %b %d  %I:%M %p}",
+        "format": "󰃰  {:%a %b %d · %I:%M %p}",
         "tooltip-format": "<big>{:%Y %B}</big>\n<tt><small>{calendar}</small></tt>"
     },
 
@@ -108,14 +82,26 @@
         "on-click": "nm-connection-editor"
     },
 
+    "custom/clipboard": {
+        "format": "󰅍",
+        "tooltip-format": "Clipboard History (Super + Ctrl + V)",
+        "on-click": "/home/stu/.config/hypr/bin/clipboard-history.sh"
+    },
+
+    "custom/shortcuts": {
+        "format": "󰌌",
+        "tooltip-format": "Shortcuts Cheatsheet (Super + K)",
+        "on-click": "/home/stu/.config/hypr/bin/shortcuts-menu.sh"
+    },
+
     "tray": {
-        "icon-size": 16,
-        "spacing": 10
+        "icon-size": 15,
+        "spacing": 8
     },
 
     "custom/power": {
-        "format": " ",
-        "tooltip": false,
-        "on-click": "hyprlock"
+        "format": "",
+        "tooltip-format": "System Power Menu (Super + Escape)",
+        "on-click": "/home/stu/.config/hypr/bin/system-menu.sh"
     }
 }

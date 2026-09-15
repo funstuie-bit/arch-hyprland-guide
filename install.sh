@@ -145,6 +145,8 @@ CORE_PACKAGES=(
     grim
     slurp
     wl-clipboard
+    cliphist
+    wtype
     brightnessctl
     playerctl
 )

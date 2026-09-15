@@ -5,8 +5,23 @@
 # ##############################################################################
 
 SHORTCUTS=(
-    "🚀 APPS	Super + Return	Open Foot terminal"
+    "📋 CLIPBOARD	Super + C	Universal Copy (Cmd + C)"
+    "📋 CLIPBOARD	Super + V	Universal Paste (Cmd + V - no Ctrl+Shift+V needed!)"
+    "📋 CLIPBOARD	Super + X	Universal Cut (Cmd + X)"
+    "📋 CLIPBOARD	Super + A	Select All (Cmd + A)"
+    "📋 CLIPBOARD	Super + Ctrl + V	Open Clipboard History & Paste (Cliphist)"
+    "🪟 WINDOWS	Super + W	Close active window (Cmd + W)"
+    "🪟 WINDOWS	Super + Q	Close active window (Cmd + Q)"
+    "🪟 WINDOWS	Super + T	Toggle window floating / tiling mode"
+    "🪟 WINDOWS	Super + F	Toggle fullscreen"
+    "🪟 WINDOWS	Super + J	Toggle split direction (horizontal / vertical)"
+    "🪟 WINDOWS	Super + Arrow Keys	Navigate focus between windows"
+    "🪟 WINDOWS	Alt + Tab	Cycle forward through windows"
+    "🪟 WINDOWS	Super + 1..9, 0	Switch to workspace 1 - 10"
+    "🪟 WINDOWS	Super + Shift + 1..0	Move active window to workspace"
     "🚀 APPS	Super + Space	Open Application Launcher (Rofi)"
+    "🚀 APPS	Super + Return	Open Foot terminal"
+    "🚀 APPS	Super + Shift + Return	Open Default Web Browser"
     "🚀 APPS	Super + B	Open Default Web Browser (Firefox/Zen/Chromium)"
     "🚀 APPS	Super + E	Open Thunar file manager"
     "🚀 APPS	Super + Shift + O	Open Obsidian (Markdown Notes)"
@@ -20,29 +35,20 @@ SHORTCUTS=(
     "🖱️ MOUSE	Super + Right-Drag	Resize window"
     "🖱️ MOUSE	Super + Middle-Click	Toggle window floating"
     "🖱️ MOUSE	Super + Scroll-Wheel	Switch through workspaces"
-    "🪟 WINDOWS	Super + Q	Close active window"
-    "🪟 WINDOWS	Super + V	Toggle floating mode"
-    "🪟 WINDOWS	Super + F	Toggle fullscreen"
-    "🪟 WINDOWS	Super + Arrow Keys	Navigate focus between windows"
-    "🪟 WINDOWS	Super + 1..9, 0	Switch to workspace 1 - 10"
-    "🪟 WINDOWS	Super + Shift + 1..0	Move active window to workspace"
     "📸 CAPTURE	Super + Shift + S	Select screen area with mouse & copy screenshot"
     "📸 CAPTURE	PrintScreen	Save full screenshot to ~/Pictures/Screenshots/"
     "🔊 AUDIO	Waybar Volume Click	Toggle mute"
     "🔊 AUDIO	Waybar Volume Right-Click	Open Pavucontrol sound mixer"
     "🔊 AUDIO	Waybar Volume Scroll	Increase / decrease volume"
     "🌐 NETWORK	Waybar Network Click	Open Network Manager connection editor"
+    "🔒 SYSTEM	Super + Escape	System Power Menu (Lock, Logout, Reboot, Shutdown)"
     "🔒 SYSTEM	Super + L	Lock screen (hyprlock)"
     "🔒 SYSTEM	Super + Shift + Q	Exit Hyprland desktop session"
-    "💻 SHELL	z <dir>	Smart jump to directory (zoxide)"
-    "💻 SHELL	Ctrl + R	Fuzzy search command history (fzf)"
-    "💻 SHELL	dua i	Interactive disk usage analyzer"
-    "💻 SHELL	tmux	Terminal workspace / session multiplexer"
 )
 
 # Format rows for Rofi
 format_row() {
-    printf "%-12s │  %-26s │  %s\n" "$1" "$2" "$3"
+    printf "%-14s │  %-24s │  %s\n" "$1" "$2" "$3"
 }
 
 MENU_ITEMS=""
@@ -55,4 +61,4 @@ done
 echo -e "$MENU_ITEMS" | rofi -dmenu \
     -i \
     -p "⌨️ Shortcuts" \
-    -theme-str 'window { width: 800px; } listview { lines: 15; }'
+    -theme-str 'window { width: 850px; } listview { lines: 15; }'
