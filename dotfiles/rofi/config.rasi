@@ -1,6 +1,6 @@
 configuration {
     modi:                       "drun,run,window";
-    font:                       "JetBrainsMono Nerd Font 11";
+    font:                       "JetBrainsMono Nerd Font 13";
     show-icons:                 true;
     icon-theme:                 "Papirus-Dark";
     display-drun:               "  Apps";
@@ -27,7 +27,7 @@ configuration {
 }
 
 window {
-    width:                      550px;
+    width:                      680px;
     border-radius:              12px;
     border:                     2px;
     border-color:               @accent;
