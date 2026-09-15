@@ -8,6 +8,21 @@
 
 ## 1. System Vision & User Design Requirements
 
+### Latest repair status (September 14, 2026, evening)
+
+This section supersedes conflicting historical notes below.
+
+- User chose full native 5120×2160 at 30 Hz, scale 1, and requested Super+T to swap tiled windows, Super+W to close a window, and Super+K for help. These are deployed and reflected in the repository.
+- Super+T uses `layoutmsg, swapsplit`; verified window coordinates change and a second swap restores them. Super+W uses `killactive`. Ctrl+T / Ctrl+W remain application tab shortcuts.
+- Boot timeout cause: `enp2s0f1u1` is the **Apple T2 internal USB network interface**, identified by udev as Apple_T2_Controller/iBridge with cdc_ncm. Its profile `Wired connection 2` (UUID `8ebe6759-ce54-3b77-83f1-de7ab2161680`) repeatedly attempted DHCP for 45 seconds per attempt. Real Ethernet `enp1s0` was already connected.
+- Set only that internal profile's `connection.autoconnect` to `no`. It remains available for manual configuration. To undo: `sudo nmcli connection modify uuid 8ebe6759-ce54-3b77-83f1-de7ab2161680 connection.autoconnect yes`.
+- Rerunning NetworkManager-wait-online now succeeds within the same second. No failed system/user services remain. **Next-boot timing has not been measured**; no reboot or restart of NetworkManager was performed.
+- NetworkManager explicitly logged `unknown key 'ipv6.method' in section [connection]`. Retired the ineffective global file to `/etc/NetworkManager/conf.d/disable-ipv6.conf.disabled` and reloaded configuration. Ethernet's profile still has IPv6 disabled, and `ipv6.disable=1` remains in the kernel command line. The original IPv6 diagnosis is unverified; do not describe the retired global file as a working fix.
+- Fixed polkit startup to import the Wayland environment and start the installed `hyprpolkitagent.service`; service verified active.
+- Installer now stops on core package/T2 package/initramfs failures, enables resolved before linking its stub, and avoids writing the invalid global IPv6 setting. Bootstrap skips the T2 interface and refuses to start networkd when NetworkManager is active. Both scripts pass Bash syntax checks; mocked core failure and the live bootstrap refusal path were verified. Full fresh-install validation is still outstanding.
+- Pre-repair desktop backup: `/home/stu/desktop-repair-backup.c3VUQv/hypr`. It includes the accepted display setting. Network configuration backup: `/etc/NetworkManager/conf.d/disable-ipv6.conf.before-desktop-repair`.
+- Remaining work: coordinated desktop appearance, broader application/lock/suspend checks, and a separate evidence-based IPv6 investigation if needed.
+
 This system is pure **Arch Linux** running **Hyprland**, tailored specifically to the user's workflow:
 1. **The "Cool" Aesthetic (Inspired by Omarchy/Catppuccin Mocha):**
    - Clean, translucent dark glass floating bar (`rgba(30, 30, 46, 0.88)`).
@@ -22,7 +37,7 @@ This system is pure **Arch Linux** running **Hyprland**, tailored specifically t
 3. **Mac-Native Keyboard Muscle Memory:**
    - Command key (`⌘` / `Super`) as primary modifier.
    - Standard clipboard keys: `Cmd + C` (copy), `Cmd + V` (paste without `Ctrl+Shift+V` gymnastics in terminals), `Cmd + X` (cut), `Cmd + A` (select all).
-   - Tabbing: `Cmd + T` (new tab in browser/editor), `Cmd + W` (close tab), `Cmd + L` (focus browser URL bar).
+   - Desktop: `Super + T` swaps the focused tiled split; `Super + W` closes the focused window. Applications use `Ctrl + T/W` for tabs; `Cmd + L` focuses the URL bar.
    - Window Tabbing (Groups): `Cmd + G` (toggle Hyprland tab group), `Cmd + [` and `Cmd + ]` (cycle tabs).
    - Window Closing: `Cmd + Q` (quit application).
    - Window Floating: `Cmd + Shift + Space` or `Cmd + Shift + F`.
@@ -58,12 +73,33 @@ This system is pure **Arch Linux** running **Hyprland**, tailored specifically t
 | **Display Server**| Wayland via **Hyprland 0.56.2** | Compositor backend: **Aquamarine 0.15.0** |
 
 ### Display & GPU Tuning (UHD 630 on Ultrawide)
+* **User-approved display setting (September 14, 2026):**
+  - `DP-1` now uses `5120x2160@30` at scale `1` (100%), providing the full native workspace.
+  - User previewed and explicitly chose this over 200% and 133% scaling. Live config and repository dotfile match.
+  - Monitor EDID advertises native 60 Hz, but the Intel driver filters it out. Current DP link capability is four lanes at HBR2 (`540000`); native 30 Hz was verified working.
 * **Comb / Sawtooth Shearing Artifacts Fixed:**
   - Disabled Intel Frame Buffer Compression (FBC) and Panel Self Refresh (PSR) via `/etc/modprobe.d/i915.conf` (`options i915 enable_fbc=0 enable_psr=0`) and kernel command line in `/boot/loader/entries/linux-t2.conf`.
 * **Aquamarine Buffer Modifiers:**
   - Set `AQ_NO_MODIFIERS=1` in `/etc/environment` and `~/.config/hypr/hyprland.conf` to prevent DRM tiling conflicts.
 * **Cursor:**
   - Configured `cursor { no_hardware_cursors = true, no_warps = true }` in `hyprland.conf`.
+
+### Mac mini audio jack repair (September 14, 2026)
+
+- Driver reports `AppleT2x1` in `/proc/asound/cards`. Installed `apple-t2-audio-config 0.4.r21.ga973d53-1` only provides x2/x4/x6 UCM profiles, causing fallback to mono internal-speaker output.
+- Added `system/alsa/ucm2/conf.d/AppleT2x1/AppleT2x1.conf` and `system/alsa/ucm2/AppleT2/HiFi-x1.conf` in this repository, deployed under `/usr/share/alsa/ucm2/`. These are local, currently unowned additions; reconcile/remove them before installing a future package that ships the same paths.
+- Profile maps mono internal speaker to PCM 0, stereo 3.5 mm jack to PCM 2, and headset input to PCM 3. The mini has no internal microphone PCM 1.
+- Restarted WirePlumber; jack detected as available and profile `HiFi (Headphones, Headset)` selected. Set default sink to `alsa_output.pci-0000_02_00.3.HiFi__Headphones__sink`, unmuted at 40%, and moved current playback there.
+- Verified mpv's two channels link to Codec Output and PCM 2 is actively playing stereo at 48 kHz. User confirmed the external speakers are working.
+- Installer supplies the missing profile only for AppleT2x1 when the entry file is absent. No kernel/boot parameter changes were required.
+- Detection also checks DMI `Macmini8,1` so the profile can be installed before the first boot with the T2 driver. README now includes automatic installation behavior, targeted manual installation, output selection, and package-upgrade caveats.
+
+### Keyboard volume OSD
+
+- `~/.config/hypr/bin/volume.sh` handles volume up/down/mute and supports `show` without changing volume. Existing 5% steps and 150% ceiling are retained.
+- Hyprland media keys call the helper; Mako's `[app-name=desktop-volume]` section presents a bottom-center progress popup with a 1.5-second timeout and no history.
+- Uses a synchronous notification tag to replace the existing popup and a runtime flock to serialize repeated key events. Progress saturates at 100%, while the label still shows amplification above 100%.
+- Live files and repository dotfiles match. Installer already deploys the helper and styling as part of normal dotfile installation.
 
 ---
 
@@ -180,8 +216,9 @@ All shortcuts use standard Mac muscle memory (`Super` = Command key `⌘`):
 | **Clipboard** | `Cmd + A` | Select All |
 | **Clipboard** | `Cmd + Z` | Undo |
 | **Clipboard** | `Cmd + Ctrl + V` | Open Clipboard History & Paste (Cliphist) |
-| **In-App Tabs**| `Cmd + T` | New Tab in browser / editor |
-| **In-App Tabs**| `Cmd + W` | Close Tab in browser / editor |
+| **Window Management**| `Super + T` | Swap the two halves of the focused tiled split |
+| **Window Management**| `Super + W` | Close focused window |
+| **In-App Tabs**| `Ctrl + T / W` | New / Close tab in browser or editor |
 | **In-App Tabs**| `Cmd + L` | Focus URL / Address Bar in browser |
 | **Window Tabs**| `Cmd + G` | Toggle active window into / out of **Hyprland Tab Group** |
 | **Window Tabs**| `Cmd + Alt + G` | Eject window from Tab Group |

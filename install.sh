@@ -4,7 +4,8 @@
 # Configured for 2018 Mac mini (T2 / Intel UHD 630) and mouse-friendly workflow
 # ##############################################################################
 
-set -u
+set -euo pipefail
+trap 'printf "Installation stopped at line %s. Resolve the reported error before rerunning.\n" "$LINENO" >&2' ERR
 
 BOLD="$(tput bold 2>/dev/null || true)"
 GREEN="$(tput setaf 2 2>/dev/null || true)"
@@ -188,10 +189,8 @@ APP_PACKAGES=(
 
 log "Updating pacman databases and installing core desktop packages..."
 if ! sudo pacman -Syu --needed --noconfirm "${CORE_PACKAGES[@]}"; then
-    warn "Batch installation encountered an issue. Attempting fallback installation..."
-    for pkg in "${CORE_PACKAGES[@]}"; do
-        sudo pacman -S --needed --noconfirm "$pkg" || warn "Could not install $pkg"
-    done
+    err "Core desktop installation failed. Stopping before deploying configuration."
+    exit 1
 fi
 
 log "Installing application and utility packages..."
@@ -208,15 +207,13 @@ log "Configuring NetworkManager and disabling conflicting network daemons..."
 # If systemd-networkd was used during initial bootstrap, disable it to prevent dual DHCP collisions
 sudo systemctl disable --now systemd-networkd 2>/dev/null || true
 
-# Prevent NetworkManager from re-enabling IPv6 on connection activation if local ISP/router has broken IPv6 routes
-sudo mkdir -p /etc/NetworkManager/conf.d
-sudo tee /etc/NetworkManager/conf.d/disable-ipv6.conf >/dev/null <<'EOF'
-[connection]
-ipv6.method=disabled
-EOF
+# IPv6 policy belongs in individual connection profiles, not a global
+# [connection] ipv6.method setting (NetworkManager ignores that setting).
+# Preserve this host's existing profile and kernel workaround.
 
 # Ensure systemd-resolved stub symlink is correct for musl/glibc binaries (e.g. Codex CLI)
-sudo ln -sf /run/systemd/resolve/stub-resolv.conf /etc/resolv.conf 2>/dev/null || true
+sudo systemctl enable --now systemd-resolved
+sudo ln -sf /run/systemd/resolve/stub-resolv.conf /etc/resolv.conf
 
 # Prioritize IPv4 in glibc gai.conf
 if [[ -f /etc/gai.conf ]]; then
@@ -224,10 +221,20 @@ if [[ -f /etc/gai.conf ]]; then
 fi
 
 log "Enabling NetworkManager..."
-sudo systemctl enable --now NetworkManager 2>/dev/null || true
+sudo systemctl enable --now NetworkManager
+
+# The Apple T2 internal USB network interface is not an internet uplink.
+# Prevent its auto-generated profile from delaying boot with failed DHCP.
+while IFS= read -r profile_uuid; do
+    profile_iface="$(nmcli -g connection.interface-name connection show uuid "$profile_uuid")"
+    [[ -n "$profile_iface" && -e "/sys/class/net/$profile_iface" ]] || continue
+    if udevadm info -q property "/sys/class/net/$profile_iface" | grep -qx 'ID_MODEL=Apple_T2_Controller'; then
+        sudo nmcli connection modify uuid "$profile_uuid" connection.autoconnect no
+    fi
+done < <(nmcli -g UUID connection show)
 
 log "Enabling Bluetooth..."
-sudo systemctl enable --now bluetooth 2>/dev/null || true
+sudo systemctl enable --now bluetooth
 
 log "Enabling Ollama service (Local AI models)..."
 sudo systemctl enable --now ollama 2>/dev/null || true
@@ -400,16 +407,26 @@ if lspci | grep -iq "Apple Inc. T2" || uname -r | grep -iq "t2"; then
 Server = https://mirror.funami.tech/arch-mact2/os/x86_64
 SigLevel = Never
 EOF
-        sudo pacman -Sy
     fi
 
     # 2. Install T2 kernel and drivers
     log "Installing linux-t2 kernel, audio config, Broadcom Wi-Fi firmware, and fan daemon..."
-    sudo pacman -S --needed --noconfirm linux-t2 linux-t2-headers apple-t2-audio-config apple-bcm-firmware t2fanrd || warn "Could not install some T2 packages."
+    sudo pacman -Syu --needed --noconfirm linux-t2 linux-t2-headers apple-t2-audio-config apple-bcm-firmware t2fanrd
+
+    # The current audio package covers x2/x4/x6 speaker layouts but omits
+    # Macmini8,1 (AppleT2x1). Supply the missing UCM profile only when absent.
+    # Prefer the package's profile if a future release provides it.
+    if { grep -q 'AppleT2x1 -' /proc/asound/cards 2>/dev/null ||
+         grep -qx 'Macmini8,1' /sys/class/dmi/id/product_name 2>/dev/null; } &&
+       [[ ! -e /usr/share/alsa/ucm2/conf.d/AppleT2x1/AppleT2x1.conf ]]; then
+        sudo install -Dm644 "${SCRIPT_DIR}/system/alsa/ucm2/AppleT2/HiFi-x1.conf" /usr/share/alsa/ucm2/AppleT2/HiFi-x1.conf
+        sudo install -Dm644 "${SCRIPT_DIR}/system/alsa/ucm2/conf.d/AppleT2x1/AppleT2x1.conf" /usr/share/alsa/ucm2/conf.d/AppleT2x1/AppleT2x1.conf
+        log "Added Mac mini mono speaker / stereo headphone jack audio profile."
+    fi
 
     # 3. Enable fan daemon
     log "Enabling t2fanrd service..."
-    sudo systemctl enable --now t2fanrd 2>/dev/null || true
+    sudo systemctl enable --now t2fanrd
 
     # 4. Configure systemd-boot loader entry if systemd-boot is present
     if [[ -d /boot/loader/entries ]]; then
@@ -439,7 +456,7 @@ EOF
         fi
     elif command -v grub-mkconfig >/dev/null 2>&1; then
         log "Updating GRUB configuration..."
-        sudo grub-mkconfig -o /boot/grub/grub.cfg 2>/dev/null || true
+        sudo grub-mkconfig -o /boot/grub/grub.cfg
     fi
 
     log "T2 hardware packages and bootloader entry configured successfully!"
@@ -463,7 +480,7 @@ if ! grep -q "AQ_NO_MODIFIERS" /etc/environment 2>/dev/null; then
 fi
 
 log "Regenerating initramfs with updated module options..."
-sudo mkinitcpio -P 2>/dev/null || true
+sudo mkinitcpio -P
 
 # -----------------------------------------------------------------------------
 # 9. SEAMLESS AUTOLOGIN & STARTUP
@@ -518,7 +535,9 @@ echo "  - ${BOLD}Cliamp Music:${RESET}         Super + M (lo-fi radio player)"
 echo "  - ${BOLD}Resize Window:${RESET}        Hover over window border & drag"
 echo "  - ${BOLD}Move Window:${RESET}          Hold Super + Left Click Drag"
 echo "  - ${BOLD}Resize Window:${RESET}        Hold Super + Right Click Drag"
-echo "  - ${BOLD}Toggle Floating:${RESET}      Super + V  (or Super + Middle Click)"
+echo "  - ${BOLD}Toggle Floating:${RESET}      Super + Shift + Space (or Super + Middle Click)"
+echo "  - ${BOLD}Swap Tiled Windows:${RESET}   Super + T"
+echo "  - ${BOLD}Close Window:${RESET}         Super + W"
 echo "  - ${BOLD}Terminal:${RESET}             Super + Enter (Foot)"
 echo "  - ${BOLD}App Launcher:${RESET}         Super + Space (Rofi)"
 echo "  - ${BOLD}File Manager:${RESET}         Super + E (Thunar)"

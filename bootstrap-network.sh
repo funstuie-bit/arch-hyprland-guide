@@ -26,10 +26,18 @@ if [[ "${EUID}" -ne 0 ]]; then
 fi
 
 header "1. Detecting Network Interfaces"
+if systemctl is-active --quiet NetworkManager; then
+    err "NetworkManager is already running. Use nmcli/nmtui; do not start a second network manager."
+    exit 1
+fi
 WIRED_IFACES=()
 for iface in /sys/class/net/en*; do
     if [[ -d "${iface}" ]]; then
         name="$(basename "${iface}")"
+        if udevadm info -q property "$iface" | grep -qx 'ID_MODEL=Apple_T2_Controller'; then
+            log "Skipping internal Apple T2 interface: $name"
+            continue
+        fi
         WIRED_IFACES+=("${name}")
         log "Found wired interface: ${BOLD}${name}${RESET}"
     fi
@@ -39,23 +47,21 @@ if [[ ${#WIRED_IFACES[@]} -eq 0 ]]; then
     warn "No interface matching 'en*' found in /sys/class/net/."
     warn "Listing all network links:"
     ip -br link
+    exit 1
 else
     log "Wired interfaces detected: ${WIRED_IFACES[*]}"
 fi
 
 header "2. Configuring systemd-networkd DHCP for Wired Interfaces"
 mkdir -p /etc/systemd/network
-cat <<'EOF' > /etc/systemd/network/20-wired.network
+cat <<EOF > /etc/systemd/network/20-wired.network
 [Match]
-Name=en*
+Name=${WIRED_IFACES[*]}
 
 [Network]
 DHCP=yes
 EOF
-log "Created /etc/systemd/network/20-wired.network for all en* interfaces."
-
-# Remove any conflicting single-interface configs
-rm -f /etc/systemd/network/20-usb.network
+log "Created /etc/systemd/network/20-wired.network for detected external wired interfaces."
 
 header "3. Enabling and Starting systemd-networkd & systemd-resolved"
 systemctl enable --now systemd-networkd
@@ -95,7 +101,7 @@ fi
 header "6. Installing and Enabling OpenSSH Server"
 if command -v pacman >/dev/null 2>&1; then
     log "Updating package database and installing openssh, git, networkmanager..."
-    pacman -Sy --needed --noconfirm openssh git networkmanager
+    pacman -Syu --needed --noconfirm openssh git networkmanager
     systemctl enable --now sshd
     log "OpenSSH server is running and enabled on boot."
 fi

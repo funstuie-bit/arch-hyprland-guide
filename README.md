@@ -1,5 +1,15 @@
 # Clean Arch Linux + Hyprland on 2018 Mac mini
 
+## Current desktop corrections — September 14, 2026
+
+- Dell DP-1: 5120×2160 at 30 Hz, 100% scaling, explicitly selected by the user.
+- Super+T swaps the two halves of the focused tiled split; Super+W closes the focused window; Super+K shows the updated cheatsheet. Ctrl+T / Ctrl+W remain application tab shortcuts.
+- The Apple T2 internal USB network interface is not an internet uplink. Its NetworkManager profile must not auto-connect with DHCP. The bootstrap script now skips it.
+- NetworkManager ignores global `[connection] ipv6.method=disabled`. The live machine retains IPv6 disabled in its Ethernet profile and kernel command line; the invalid global file has been retired.
+- Core package, T2 package, and initramfs failures stop the installer. Do not rerun the installer merely to update desktop shortcuts: it performs system-wide changes.
+
+The installation history below includes older manual recovery commands. Prefer the guarded bootstrap script for recovery; never start networkd alongside an active NetworkManager.
+
 A lightweight, transparent, and independently configured Arch Linux + Hyprland desktop designed for the **2018 Intel Mac mini (T2 / Intel UHD 630)**.
 
 This setup extracts the best productivity innovations of custom Arch setups into a **clean, modular "Lite" build**—without DHH's monolithic Lua layer, forced branding, proprietary update mechanisms, or opinionated bloat.
@@ -95,7 +105,7 @@ printf '[Match]\nName=en*\n\n[Network]\nDHCP=yes\n' | sudo tee /etc/systemd/netw
 ### Step 2: Enable SSH, Git & NetworkManager (1 Line)
 Once network is up, immediately install OpenSSH, start the SSH server, and display your IP address:
 ```bash
-sudo pacman -Sy --needed --noconfirm openssh git networkmanager && sudo systemctl enable --now sshd && ip -br a
+sudo pacman -Syu --needed --noconfirm openssh git networkmanager && sudo systemctl enable --now sshd && ip -br a
 ```
 Look for your IP address (e.g. `192.168.1.65/24`) next to `enp1s0`.
 
@@ -223,7 +233,7 @@ Your mouse cursor will not jump or snap across windows when switching focus.
 | **Resize window directly** | Hover over border/corner and click-drag |
 | **Move window** | Hold `Super` + Left-Click Drag |
 | **Resize window** | Hold `Super` + Right-Click Drag |
-| **Toggle Floating** | Hold `Super` + Middle-Click (or `Super + T`) |
+| **Toggle Floating** | Hold `Super` + Middle-Click (or `Super + Shift + Space`) |
 | **Switch Workspaces** | Hold `Super` + Mouse Scroll Wheel |
 
 ### Interactive Status Bar (Waybar) & Omarchy Menu
@@ -250,7 +260,8 @@ Your mouse cursor will not jump or snap across windows when switching focus.
 | `Super + Ctrl + V` | **Clipboard History** | Opens searchable clipboard manager (Cliphist) |
 | `Super + W` | **Close Window** | Closes the focused window (`Cmd + W`) |
 | `Super + Q` | **Close Window** | Closes the focused window (`Cmd + Q` / Linux standard) |
-| `Super + T` | **Toggle Floating** | Detaches window from tiling grid |
+| `Super + T` | **Swap Tiled Windows** | Swaps the two halves of the focused window's split |
+| `Super + Shift + Space` | **Toggle Floating** | Detaches window from tiling grid |
 | `Super + J` | **Toggle Split** | Toggles split direction (horizontal / vertical) |
 | `Super + F` | **Fullscreen** | Toggles fullscreen for active window |
 | `Super + K` | **Shortcuts Cheatsheet** | Searchable popup listing all key/mouse shortcuts |
@@ -265,7 +276,8 @@ Your mouse cursor will not jump or snap across windows when switching focus.
 | `Super + Shift + A`| **Launch AI Agent** | Opens default agent (`agy`, `claude`, `codex`, `opencode`, `omp`) |
 | `Super + Alt + A` | **Pick AI Agent** | Select / change default AI agent |
 | `Super + Escape` | **System Menu** | Opens power menu (Lock, Logout, Reboot, Shutdown) |
-| `Super + L` | **Lock Screen** | Locks session via `hyprlock` |
+| `Super + L` | **Address Bar** | Sends Ctrl+L to the focused application |
+| `Super + Ctrl + L` | **Lock Screen** | Locks session via `hyprlock` |
 | `Super + Shift + S`| **Screenshot Area** | Select rectangular area with mouse and copy to clipboard |
 | `PrintScreen` | **Full Screenshot** | Saves screenshot to `~/Pictures/Screenshots/` |
 | `Super + 1 .. 9, 0`| **Workspaces** | Switch to workspaces 1 through 10 |
@@ -315,9 +327,60 @@ SigLevel = Never
 ```
 Then install `linux-t2`, `linux-t2-headers`, `apple-t2-audio-config`, `apple-bcm-firmware`, and `t2fanrd`:
 ```bash
-sudo pacman -Sy --needed linux-t2 linux-t2-headers apple-t2-audio-config apple-bcm-firmware t2fanrd
+sudo pacman -Syu --needed linux-t2 linux-t2-headers apple-t2-audio-config apple-bcm-firmware t2fanrd
 sudo systemctl enable --now t2fanrd
 ```
+
+### Mac mini 3.5 mm headphone jack / external speakers
+
+**Included in `./install.sh`.** The installer detects the 2018 Mac mini
+(`Macmini8,1` or ALSA `AppleT2x1`) and installs its missing audio profile if
+the distribution package does not already provide one. The bundled profile exposes
+the mono internal speaker, stereo headphone jack, and headset microphone.
+It takes effect when the audio session next starts, including after reboot.
+
+This is necessary with `apple-t2-audio-config 0.4.r21.ga973d53-1`: that package
+only includes x2/x4/x6 speaker layouts. On this mini, the missing x1 profile
+caused music to play through the internal speaker even with external speakers plugged in.
+
+To add just this fix to an existing installation, from the repository directory:
+
+```bash
+# Only needed when the distribution's AppleT2x1 profile is absent.
+if [[ ! -e /usr/share/alsa/ucm2/conf.d/AppleT2x1/AppleT2x1.conf ]]; then
+    sudo install -Dm644 system/alsa/ucm2/AppleT2/HiFi-x1.conf /usr/share/alsa/ucm2/AppleT2/HiFi-x1.conf
+    sudo install -Dm644 system/alsa/ucm2/conf.d/AppleT2x1/AppleT2x1.conf /usr/share/alsa/ucm2/conf.d/AppleT2x1/AppleT2x1.conf
+fi
+systemctl --user restart wireplumber
+```
+
+With speakers connected, open `pavucontrol` (right-click the bar's volume icon),
+choose the Mac mini profile containing **Headphones**, and set **External Speakers /
+Headphones** as the fallback/default output. Existing application streams can be
+moved there on the Playback tab. This preference is remembered by WirePlumber.
+
+For this bundled profile, the equivalent commands are:
+
+```bash
+pactl set-card-profile alsa_card.pci-0000_02_00.3 'HiFi (Headphones, Headset)'
+pactl set-default-sink alsa_output.pci-0000_02_00.3.HiFi__Headphones__sink
+```
+
+Verify with `wpctl status`: playback should link to Codec Output's left/right channels.
+External-speaker playback has been confirmed on this machine.
+
+These two profile files are local additions under `/usr/share/alsa/ucm2`.
+If a future audio package supplies the same paths, reconcile the local additions
+before upgrading; do not blindly overwrite the new package's profiles.
+
+### Keyboard volume indicator
+
+Volume up/down and mute keys use `~/.config/hypr/bin/volume.sh`.
+Each press displays a bottom-center volume bar and percentage (or mute status)
+for 1.5 seconds. Repeated presses update one popup. It uses the existing Mako
+notification daemon, libnotify, and WirePlumber; no extra OSD daemon is needed.
+The installer deploys the helper, keyboard bindings, and Mako styling together.
+Run `~/.config/hypr/bin/volume.sh show` to preview without changing volume.
 
 ### Intel UHD 630 Graphics Glitch Prevention (Sawtooth / Comb Artifacts)
 On the 2018 Mac mini (Coffee Lake Intel UHD 630), Wayland compositors can suffer from severe horizontal shearing and comb-like artifacts caused by Intel hardware Frame Buffer Compression (FBC) and Color Control Surface (CCS) buffer modifiers. 
@@ -374,4 +437,3 @@ Whenever you edit `~/.config/hypr/hyprland.conf`, Hyprland reloads automatically
 hyprctl reload
 hyprctl configerrors
 ```
-

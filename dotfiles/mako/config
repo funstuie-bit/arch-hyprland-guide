@@ -19,3 +19,20 @@ group-by=summary
 [urgency=high]
 border-color=#f38ba8
 default-timeout=0
+
+# Keyboard volume OSD: one transient progress bar above fullscreen windows.
+[app-name=desktop-volume]
+anchor=bottom-center
+layer=overlay
+width=320
+height=64
+margin=0,0,70
+padding=18
+font=JetBrainsMono Nerd Font 12
+format=%s
+text-alignment=center
+progress-color=over #89b4fa55
+border-color=#89b4fa
+default-timeout=1500
+history=0
+group-by=none
