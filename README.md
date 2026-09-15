@@ -58,43 +58,59 @@ Once booted into the live environment:
    ```
 3. In `archinstall`, select:
    - **Audio:** PipeWire
-   - **Network:** NetworkManager
+   - **Network:** systemd-networkd (or NetworkManager)
    - **Kernel:** `linux-t2` (if prompted or on T2 ISO) or `linux` (add `t2linux` repository post-install)
    - **Profile:** Minimal / No desktop environment initially
    - **User:** Create a standard user with `sudo` / `wheel` privileges
+
+> [!IMPORTANT]
+> **T2 Hardware Constraint:** Wi-Fi (Broadcom BCM4364) will **NOT** work immediately upon booting your fresh installation because proprietary firmware (`apple-bcm-firmware`) must be built from the AUR after an internet connection is established. You **MUST** plug an Ethernet cable into the Mac mini onboard port (`enp1s0`) or a USB-Ethernet adapter.
+> 
+> **Time-Saving Tip (Pre-Reboot Network Setup):** Before rebooting out of `archinstall`, select **"Chroot into installation"** from the final menu and run:
+> ```bash
+> printf '[Match]\nName=en*\n\n[Network]\nDHCP=yes\n' > /etc/systemd/network/20-wired.network
+> systemctl enable systemd-networkd systemd-resolved sshd
+> ln -sf /run/systemd/resolve/stub-resolv.conf /etc/resolv.conf
+> exit
+> ```
+> This ensures Ethernet DHCP, DNS, and SSH are already running on the very first boot!
 
 Reboot into your new Arch Linux system.
 
 ---
 
-## 3. Quick Setup (Automated)
+## 3. First-Boot Network & SSH Bootstrap (Mac mini Console)
 
-Once booted into your new Arch Linux terminal:
+On a minimal Arch install, no DHCP client or NetworkManager runs automatically on first boot. When you plug in an Ethernet cable, the interface stays `DOWN` with no IP address.
 
-### Step 1: Connect to Internet (if on Wi-Fi)
+To avoid typing endless configuration files by hand on the physical Mac mini keyboard, run these **two quick commands** directly at the login prompt:
+
+### Step 1: Bring Up Wired Network & DNS (1 Line)
+Plug an Ethernet cable into the Mac mini's onboard Ethernet port (`enp1s0`) and run:
 ```bash
-# Connect directly:
-nmcli device wifi connect "Your_SSID" password "Your_Password"
-
-# Or use the interactive text menu:
-nmtui
+printf '[Match]\nName=en*\n\n[Network]\nDHCP=yes\n' | sudo tee /etc/systemd/network/20-wired.network && sudo systemctl enable --now systemd-networkd systemd-resolved && sudo ln -sf /run/systemd/resolve/stub-resolv.conf /etc/resolv.conf && sudo ip link set enp1s0 up
 ```
+*(If using a USB-Ethernet adapter instead of the onboard port, check `ip -br link` and replace `enp1s0` with your adapter name, e.g. `enp0s20f0u4`)*
 
-### Step 2: Enable SSH (Recommended for Easy Setup & Copy-Pasting)
-Enabling SSH lets you log in from your Mac/laptop terminal so you can easily copy and paste commands:
+### Step 2: Enable SSH, Git & NetworkManager (1 Line)
+Once network is up, immediately install OpenSSH, start the SSH server, and display your IP address:
+```bash
+sudo pacman -Sy --needed --noconfirm openssh git networkmanager && sudo systemctl enable --now sshd && ip -br a
+```
+Look for your IP address (e.g. `192.168.1.65/24`) next to `enp1s0`.
 
-1. **On your Mac mini (in the TTY):**
-   ```bash
-   sudo pacman -Sy --needed --noconfirm openssh
-   sudo systemctl enable --now sshd
-   ip -br a
-   ```
-   *(Find the `192.168.x.x` address next to `wlan0` or Ethernet)*
+*(Alternatively, if you already have the repo on a USB stick, you can simply run `sudo bash bootstrap-network.sh`)*
 
-2. **From your laptop terminal:**
-   ```bash
-   ssh yourusername@<MAC_MINI_IP>
-   ```
+---
+
+## 4. Quick Setup Over Remote SSH (From Your Mac/Laptop)
+
+Now you can **disconnect the keyboard and monitor from your Mac mini** and do everything comfortably from your primary Mac or laptop terminal:
+
+### Step 1: Log in via SSH
+```bash
+ssh yourusername@<MAC_MINI_IP>
+```
 
 *(Optional: Transfer your logged-in `agy` token directly from your Mac to the Mac mini:)*
 ```bash
@@ -103,22 +119,7 @@ ssh yourusername@<MAC_MINI_IP> "mkdir -p ~/.gemini/antigravity-cli"
 scp ~/.gemini/antigravity-cli/antigravity-oauth-token yourusername@<MAC_MINI_IP>:~/.gemini/antigravity-cli/
 ```
 
-### Step 3: Ensure Git and Sudo Are Ready
-On a minimal Arch install, `git` is not installed by default. Install it:
-```bash
-sudo pacman -Sy --needed --noconfirm git
-```
-*(If you are logged in as `root`, create your standard user and configure sudo first:)*
-```bash
-useradd -m -G wheel -s /bin/bash yourusername
-passwd yourusername
-pacman -Sy --needed --noconfirm sudo
-echo '%wheel ALL=(ALL:ALL) ALL' > /etc/sudoers.d/wheel
-su - yourusername
-```
-
-### Step 4: Clone and Run the Setup
-As your regular user:
+### Step 2: Clone and Run the Installer
 ```bash
 git clone https://github.com/funstuie-bit/arch-hyprland-guide.git
 cd arch-hyprland-guide
@@ -129,14 +130,14 @@ The script includes automatic pre-flight checks and will:
 1. Install Intel UHD 630 drivers, Hyprland, Waybar, Rofi, Foot, PipeWire audio, fonts, and utilities.
 2. Install your curated software suite (TUIs, modern shell, GUIs, browsers, and AI tools).
 3. Install **Cliamp** terminal music player directly into `/usr/local/bin/cliamp`.
-4. Install `yay` and AUR packages (`zen-browser-bin`, `localsend-bin`, `mise-bin`, `lm-studio-bin`).
+4. Install `yay` and AUR packages (`zen-browser-bin`, `localsend-bin`, `mise-bin`, `lm-studio-bin`, `apple-bcm-firmware`).
 5. Enable `NetworkManager`, `bluetooth`, and `ollama` system services.
 6. Back up existing configs and deploy mouse-friendly dotfiles to `~/.config/`.
 7. Set up the AI crash diagnosis daemon and default agent configuration.
 
-To start your graphical desktop, run:
+To start your graphical desktop, either log in on `tty1` (autologin is pre-configured) or run:
 ```bash
-Hyprland
+start-hyprland
 ```
 
 ---

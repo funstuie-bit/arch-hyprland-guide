@@ -49,7 +49,8 @@ This system is pure **Arch Linux** running **Hyprland**, tailored specifically t
 | **Graphics** | Intel UHD Graphics 630 (`i915` driver) | Integrated GPU |
 | **Security Chip** | Apple T2 Security Chip (`t2bce_core`) | Manages NVMe, audio, Wi-Fi, fan, power |
 | **Audio** | Apple Audio Device (`snd-soc-mact2-audio`) | Managed via `apple-t2-audio-config` + PipeWire |
-| **Wi-Fi / BT** | Broadcom BCM4364 | Requires `apple-bcm-firmware` |
+| **Wi-Fi / BT** | Broadcom BCM4364 | Requires `apple-bcm-firmware` (from AUR) |
+| **Ethernet** | Onboard Gigabit/10GbE (`enp1s0`) | Primary wired network interface |
 | **Fan Daemon** | `t2fanrd` | Service: `systemctl status t2fanrd` |
 | **Connected Display**| Dell U4021QW 40" 5K2K Ultrawide (21:9) | Connected via **Thunderbolt 3** on port **`DP-1`** |
 | **Active Kernel** | `linux-t2` (`7.2.4-arch1-Watanare-T2-2-t2`) | Arch MacT2 community kernel |
@@ -66,7 +67,88 @@ This system is pure **Arch Linux** running **Hyprland**, tailored specifically t
 
 ---
 
-## 3. Mouse Interaction Map (Waybar & Desktop)
+## 3. First-Boot Network & SSH Bootstrap (Lessons Learned & Solution)
+
+### The Hardware Reality on 2018 Mac mini
+On a fresh minimal Arch installation, you cannot use Wi-Fi or SSH immediately:
+1. **Wi-Fi is non-functional on fresh install:** The Broadcom BCM4364 wireless chip requires proprietary firmware (`apple-bcm-firmware`) which can only be built from the AUR *after* an internet connection is established.
+2. **Minimal Arch has no active DHCP client:** The base Arch install does not start NetworkManager or `systemd-networkd` automatically. Plugging in an Ethernet cable leaves the link `DOWN` with no IP address.
+3. **Typing on the physical console is painful:** The user had to manually type configuration files, link resolvers, toggle interfaces, and install packages by hand on the Mac mini before being able to SSH from their laptop.
+
+### The User's Historical Bootstrap Log (What Had to Be Done)
+The user executed and discovered the following sequence to bring the network alive:
+```bash
+# Attempt 1: systemd-networkd wildcard DHCP & resolver setup
+printf '[Match]\nName=en*\n\n[Network]\nDHCP=yes\n' | sudo tee /etc/systemd/network/20-wired.network
+sudo systemctl enable --now systemd-networkd
+sudo systemctl enable --now systemd-resolved
+sudo ln -sf /run/systemd/resolve/stub-resolv.conf /etc/resolv.conf
+
+# Attempt 2: USB Ethernet dongle (enp0s20f0u4)
+sudo ip link set enp0s20f0u4 up
+printf '[Match]\nName=enp0s20f0u4\n\n[Network]\nDHCP=yes\n' | sudo tee /etc/systemd/network/20-usb.network
+sudo networkctl reload
+sudo networkctl reconfigure enp0s20f0u4
+
+# Attempt 3: Onboard Mac mini Ethernet (enp1s0) + manual link UP
+sudo rm -f /etc/systemd/network/20-usb.network
+sudo ip link set enp1s0 up
+sudo systemctl restart systemd-networkd
+
+# Result:
+# enp1s0 UP 192.168.1.65/24
+
+# Package installation & SSH activation:
+sudo pacman -Syu
+sudo pacman -Sy --needed --noconfirm git networkmanager openssh
+sudo systemctl enable --now sshd
+ip -br a
+```
+
+### The Streamlined 2-Step Solution for Next Time
+
+To make future installs seamless, this entire ordeal is condensed into **two quick commands** to run on the Mac mini console:
+
+#### Step 1: Bring Up Network & DNS (1 Line)
+Plug an Ethernet cable into the Mac mini onboard port (`enp1s0`) and run:
+```bash
+printf '[Match]\nName=en*\n\n[Network]\nDHCP=yes\n' | sudo tee /etc/systemd/network/20-wired.network && sudo systemctl enable --now systemd-networkd systemd-resolved && sudo ln -sf /run/systemd/resolve/stub-resolv.conf /etc/resolv.conf && sudo ip link set enp1s0 up
+```
+
+#### Step 2: Enable SSH & Print IP (1 Line)
+```bash
+sudo pacman -Sy --needed --noconfirm openssh git networkmanager && sudo systemctl enable --now sshd && ip -br a
+```
+
+#### Step 3: Switch to Your Mac / Laptop Terminal
+Disconnect the monitor and keyboard from the Mac mini. Everything else can be run over SSH:
+```bash
+ssh stu@<MAC_MINI_IP>
+git clone https://github.com/funstuie-bit/arch-hyprland-guide.git
+cd arch-hyprland-guide
+./install.sh
+```
+
+### Automated Script in Repository: `bootstrap-network.sh`
+The repository now includes `bootstrap-network.sh` which automates interface detection (onboard `enp1s0` and USB dongles), DHCP configuration, DNS stub linking, link up, and SSH enabling in a single command:
+```bash
+sudo bash bootstrap-network.sh
+```
+
+### Pro-Tip: Skip This Entirely During `archinstall` (Pre-Reboot)
+If re-installing via `archinstall`:
+1. Under **Network configuration**, do not select "Copy ISO configuration". Choose **systemd-networkd** or **NetworkManager**.
+2. Before rebooting `archinstall`, select **"Chroot into installation"** and run:
+   ```bash
+   printf '[Match]\nName=en*\n\n[Network]\nDHCP=yes\n' > /etc/systemd/network/20-wired.network
+   systemctl enable systemd-networkd systemd-resolved sshd
+   ln -sf /run/systemd/resolve/stub-resolv.conf /etc/resolv.conf
+   ```
+3. Type `exit` and reboot. The Mac mini will boot up with Ethernet DHCP, DNS, and SSH server already running!
+
+---
+
+## 4. Mouse Interaction Map (Waybar & Desktop)
 
 | Module / Area | Left-Click Action | Right-Click Action | Scroll / Drag Action |
 | :--- | :--- | :--- | :--- |
@@ -86,7 +168,7 @@ This system is pure **Arch Linux** running **Hyprland**, tailored specifically t
 
 ---
 
-## 4. Keyboard Shortcuts Reference
+## 5. Keyboard Shortcuts Reference
 
 All shortcuts use standard Mac muscle memory (`Super` = Command key `⌘`):
 
@@ -133,10 +215,11 @@ All shortcuts use standard Mac muscle memory (`Super` = Command key `⌘`):
 
 ---
 
-## 5. Configuration File Map
+## 6. Configuration File Map
 
 | Component | Host Path | Repository Path | Description |
 | :--- | :--- | :--- | :--- |
+| **Bootstrap Script**| *(optional)* | `bootstrap-network.sh` | First-boot Ethernet, DHCP, DNS, and SSH enabler |
 | **Hyprland** | `~/.config/hypr/hyprland.conf` | `dotfiles/hypr/hyprland.conf` | Compositor, window rules, groupbar, mouse binds |
 | **Waybar Config**| `~/.config/waybar/config.jsonc` | `dotfiles/waybar/config.jsonc` | Modules, mouse click actions (left/right), layout |
 | **Waybar Style** | `~/.config/waybar/style.css` | `dotfiles/waybar/style.css` | Catppuccin Mocha glass pills, hover highlights |
