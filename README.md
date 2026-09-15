@@ -2,7 +2,7 @@
 
 A lightweight, transparent, and independently configured Arch Linux + Hyprland desktop designed for the **2018 Intel Mac mini (T2 / Intel UHD 630)**.
 
-This setup extracts the best productivity innovations of Omarchy into a **clean, modular "Lite" build**—without DHH's monolithic Lua layer, forced branding, proprietary update mechanisms, or opinionated bloat.
+This setup extracts the best productivity innovations of custom Arch setups into a **clean, modular "Lite" build**—without DHH's monolithic Lua layer, forced branding, proprietary update mechanisms, or opinionated bloat.
 
 ### Key Features
 - **🤖 Built-in AI Agent & 1-Click Crash Diagnosis:** System crashes monitored via `systemd-coredump` send a notification. Clicking it opens a dedicated Foot terminal running your default agent (`agy`, `claude`, `codex`, `opencode`, or `omp`) with the crash trace and resolution prompt pre-loaded.
